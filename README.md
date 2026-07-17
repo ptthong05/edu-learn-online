@@ -1,6 +1,6 @@
 # EduLearn – Documentation
 
-> Tài liệu chính thức của nền tảng học trực tuyến **EduLearn**.
+> Tài liệu chính thức của nền tảng học trực tuyến qua drive **EduLearn**.
 
 ## Giới thiệu
 
