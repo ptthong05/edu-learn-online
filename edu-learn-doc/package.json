@@ -1,0 +1,12 @@
+﻿{
+  "name": "edu-learn-doc",
+  "version": "1.0.0",
+  "description": "Official documentation for the EduLearn platform",
+  "scripts": {
+    "docs:vi": "echo Building Vietnamese docs...",
+    "docs:en": "echo Building English docs..."
+  },
+  "keywords": ["edulearn", "documentation", "elearning"],
+  "author": "EduLearn Team",
+  "license": "MIT"
+}
