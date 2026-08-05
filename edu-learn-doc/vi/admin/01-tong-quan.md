@@ -15,6 +15,7 @@ Admin Dashboard là giao diện quản trị trung tâm của EduLearn, cho phé
 ## Cấu trúc Dashboard
 
 ### Thanh điều hướng (Sidebar)
+
 - **Tổng quan** – Thống kê doanh số, học viên (Manager và Staff)
 - **Khóa học** – Quản lý và biên tập nội dung khóa học (Manager và Staff)
 - **Danh mục** – Quản lý danh mục chuyên đề (Manager và Staff)
@@ -32,9 +33,10 @@ Admin Dashboard là giao diện quản trị trung tâm của EduLearn, cho phé
 - **Thống kê doanh thu CTV** – Xem báo cáo hoa hồng (Manager và Staff)
 - **Thanh toán rút tiền** – Quản lý lệnh rút tiền hoa hồng của CTV (Manager và Staff)
 - **Tài khoản Quản trị** – Quản lý phân quyền tài khoản quản trị hệ thống (**Chỉ dành for MANAGER**, Staff bị ẩn)
-- **Tài khoản của tôi** – Chỉnh sửa thông tin cá nhân (Manager và Staff)
+- **Tài khoản của tôi** – Chỉnh sửa thông tin cá nhân
 
 ### Thẻ thống kê (KPI Cards)
+
 Trang Dashboard hiển thị các chỉ số:
 | Chỉ số | Mô tả |
 |--------|-------|
@@ -45,9 +47,9 @@ Trang Dashboard hiển thị các chỉ số:
 
 ## Vai trò người dùng
 
-| Vai trò | Quyền hạn |
-|---------|----------|
-| `MANAGER` | **Quản lý (Admin)**: Toàn quyền quản trị hệ thống, dữ liệu tài khoản, phân quyền. |
-| `STAFF` | **Nhân viên**: Hỗ trợ vận hành các tính năng kinh doanh (khoá học, combo, mã giảm giá, bài viết, phê duyệt đơn hàng, thanh toán rút tiền). Bị hạn chế quyền xem thông tin Người dùng và Tài khoản Quản trị. |
-| `USER` | **Học viên**: Mua khóa học, thanh toán, học trực tuyến. |
-| `AFFILIATE` | **Cộng tác viên**: Tham gia tiếp thị liên kết, nhận hoa hồng. |
+| Vai trò     | Quyền hạn                                                                                                                                                                                                   |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MANAGER`   | **Quản lý (Admin)**: Toàn quyền quản trị hệ thống, dữ liệu tài khoản, phân quyền.                                                                                                                           |
+| `STAFF`     | **Nhân viên**: Hỗ trợ vận hành các tính năng kinh doanh (khoá học, combo, mã giảm giá, bài viết, phê duyệt đơn hàng, thanh toán rút tiền). Bị hạn chế quyền xem thông tin Người dùng và Tài khoản Quản trị. |
+| `USER`      | **Học viên**: Mua khóa học, thanh toán, học trực tuyến.                                                                                                                                                     |
+| `AFFILIATE` | **Cộng tác viên**: Tham gia tiếp thị liên kết, nhận hoa hồng.                                                                                                                                               |

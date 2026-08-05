@@ -1,4 +1,4 @@
-﻿# Mẫu Tài liệu Chuẩn
+# Mẫu Tài liệu Chuẩn
 
 Sử dụng mẫu này khi tạo tài liệu mới cho dự án EduLearn.
 
@@ -41,8 +41,8 @@ A: [Câu trả lời]
 
 ## Liên quan
 
-- [Tài liệu liên quan 1](../path/to/doc1.md)
-- [Tài liệu liên quan 2](../path/to/doc2.md)
+- [Tài liệu SRS](../requirements/srs.md)
+- [Kiến trúc Hệ thống](../architecture/system-architecture.md)
 
 ---
 
