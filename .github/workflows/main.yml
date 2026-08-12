@@ -30,4 +30,3 @@ jobs:
         working-directory: ./edu-learn-project/backend
         run: |
           npm install
-
