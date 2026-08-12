@@ -1,6 +1,5 @@
 'use client';
-export const dynamic = 'force-dynamic';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -8,7 +7,7 @@ import { getBankId } from '@/lib/utils/helpers';
 import { useCart } from '@/lib/hooks/useCart';
 import { getAuthToken } from '@/lib/utils/auth';
 
-export default function OrderConfirmationPage() {
+function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const isCheckout = searchParams.get('checkout') === 'true';
@@ -472,5 +471,13 @@ export default function OrderConfirmationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OrderConfirmationPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><p className="text-gray-600">Đang tải...</p></div>}>
+      <OrderConfirmationContent />
+    </Suspense>
   );
 }
