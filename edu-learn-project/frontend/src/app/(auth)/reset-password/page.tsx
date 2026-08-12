@@ -1,10 +1,9 @@
 'use client';
-export const dynamic = 'force-dynamic';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
@@ -287,5 +286,13 @@ export default function ResetPasswordPage() {
         <Link href="/login" className="text-primary-600 hover:underline font-medium">← Quay lại đăng nhập</Link>
       </p>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="animate-fade-in text-center py-8"><p className="text-gray-500 text-sm">Đang tải...</p></div>}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
