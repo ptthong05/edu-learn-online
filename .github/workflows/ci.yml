@@ -29,8 +29,7 @@ jobs:
 
       - name: Install Backend Dependencies
         working-directory: ./edu-learn-project/backend
-        run: |
-          npm install
+        run: npm install
 
   automation-test:
     name: Automation Test
@@ -46,14 +45,80 @@ jobs:
         with:
           node-version: 20
 
+      # Backend
+      - name: Install Backend Dependencies
+        working-directory: ./edu-learn-project/backend
+        run: npm install
+
+      # Frontend
+      - name: Install Frontend Dependencies
+        working-directory: ./edu-learn-project/frontend
+        run: npm install
+
+      # Automation
       - name: Install Automation Dependencies
         working-directory: ./automation-tests
         run: npm install
 
-      - name: Install Playwright
+      - name: Install Playwright Browsers
         working-directory: ./automation-tests
         run: npx playwright install --with-deps
 
+      # Start Backend :5000
+      - name: Start Backend
+        working-directory: ./edu-learn-project/backend
+        run: |
+          npm start > backend.log 2>&1 &
+
+      # Start Frontend :3000
+      - name: Start Frontend
+        working-directory: ./edu-learn-project/frontend
+        run: |
+          npm run dev > frontend.log 2>&1 &
+
+      # Wait Backend
+      - name: Wait for Backend
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:5000 > /dev/null; then
+              echo "Backend is ready"
+              exit 0
+            fi
+
+            echo "Waiting for backend..."
+            sleep 2
+          done
+
+          echo "Backend failed to start"
+          cat ./edu-learn-project/backend/backend.log || true
+          exit 1
+
+      # Wait Frontend
+      - name: Wait for Frontend
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/login > /dev/null; then
+              echo "Frontend is ready"
+              exit 0
+            fi
+
+            echo "Waiting for frontend..."
+            sleep 2
+          done
+
+          echo "Frontend failed to start"
+          cat ./edu-learn-project/frontend/frontend.log || true
+          exit 1
+
+      # Run Automation
       - name: Run CodeceptJS Automation Tests
         working-directory: ./automation-tests
-        run: npx codeceptjs run --steps
+        run: npm run codeceptjs:headless
+
+      # Upload test report even when test fails
+      - name: Upload Automation Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeceptjs-test-results
+          path: ./automation-tests/output
