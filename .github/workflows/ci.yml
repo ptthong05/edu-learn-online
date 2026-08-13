@@ -31,3 +31,29 @@ jobs:
         working-directory: ./edu-learn-project/backend
         run: |
           npm install
+
+  automation-test:
+    name: Automation Test
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Automation Dependencies
+        working-directory: ./automation-tests
+        run: npm install
+
+      - name: Install Playwright
+        working-directory: ./automation-tests
+        run: npx playwright install --with-deps
+
+      - name: Run CodeceptJS Automation Tests
+        working-directory: ./automation-tests
+        run: npx codeceptjs run --steps
