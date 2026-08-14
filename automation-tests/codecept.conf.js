@@ -1,6 +1,6 @@
 /** @type {CodeceptJS.MainConfig} */
 exports.config = {
-  tests: './tests/*_test.js',
+  tests: './tests/**/*_test.js',
 
   output: './output',
 
@@ -8,7 +8,7 @@ exports.config = {
     Playwright: {
       browser: 'chromium',
       url: 'http://localhost:3000',
-      show: false
+      show: true
     }
   },
 
