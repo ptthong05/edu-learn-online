@@ -1,6 +1,6 @@
 /** @type {CodeceptJS.MainConfig} */
 exports.config = {
-  tests: './tests/*_test.js',
+  tests: './tests/**/*_test.js',
 
   output: './output',
 
