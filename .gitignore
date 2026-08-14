@@ -12,3 +12,9 @@ build/
 # Environment
 .env
 .env.local
+
+# Test outputs & Logs
+output/
+automation-tests/output/
+*.log
+*.pid
