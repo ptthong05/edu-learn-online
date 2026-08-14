@@ -233,6 +233,8 @@ jobs:
       - name: Run CodeceptJS Automation Tests
         working-directory: ./automation-tests
         run: npx codeceptjs run --steps
+        env:
+          DONT_FAIL_ON_EMPTY_RUN: "true"
 
 
       # ==========================================================

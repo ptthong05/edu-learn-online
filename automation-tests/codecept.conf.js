@@ -17,7 +17,7 @@ exports.config = {
   },
 
   plugins: {
-    screenshotOnFail: {
+    screenshot: {
       enabled: true
     }
   },
