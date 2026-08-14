@@ -16,8 +16,6 @@ exports.config = {
     I: './steps_file.js'
   },
 
-  noGlobals: true,
-
   plugins: {
     screenshotOnFail: {
       enabled: true
