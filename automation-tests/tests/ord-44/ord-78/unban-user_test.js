@@ -1,6 +1,6 @@
 Feature('ORD-78 - Unban User');
 
-Scenario('Admin can unban user', ({ I }) => {
+Scenario('Admin can unban user ORD-78', ({ I }) => {
 
     I.amOnPage('/');
 
@@ -9,6 +9,7 @@ Scenario('Admin can unban user', ({ I }) => {
     I.wait(3);
 
     I.fillField('input[type="email"]','manage@edulearn.vn');
+
     I.fillField('input[type="password"]','admin123');
 
     I.click('Đăng nhập');

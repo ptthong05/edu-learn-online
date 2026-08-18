@@ -1,6 +1,6 @@
-Feature('ORD-78 - Unban User');
+Feature('ORD-79 - Banned User Login');
 
-Scenario('Admin can unban user', ({ I }) => {
+Scenario('Banned user cannot login ORD-79', ({ I }) => {
 
     I.amOnPage('/');
 
@@ -8,13 +8,14 @@ Scenario('Admin can unban user', ({ I }) => {
 
     I.wait(3);
 
-    I.fillField('input[type="email"]','manage@edulearn.vn');
-    I.fillField('input[type="password"]','admin123');
+    I.fillField('input[type="email"]','banned@test.com');
+
+    I.fillField('input[type="password"]','123456');
 
     I.click('Đăng nhập');
 
     I.wait(5);
 
-    I.saveScreenshot('ord78-unban');
+    I.saveScreenshot('ord79-banned-login');
 
 });

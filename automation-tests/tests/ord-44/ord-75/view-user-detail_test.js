@@ -1,6 +1,6 @@
-Feature('ORD-74 - Search Invalid Keyword');
+Feature('ORD-75 - View User Detail');
 
-Scenario('Admin searches non existing user', ({ I }) => {
+Scenario('Admin views user detail ORD-75', ({ I }) => {
 
     I.amOnPage('/');
 
@@ -9,12 +9,13 @@ Scenario('Admin searches non existing user', ({ I }) => {
     I.wait(3);
 
     I.fillField('input[type="email"]','manage@edulearn.vn');
+
     I.fillField('input[type="password"]','admin123');
 
     I.click('Đăng nhập');
 
     I.wait(5);
 
-    I.saveScreenshot('ord74-invalid-search');
+    I.saveScreenshot('ord75-user-detail');
 
 });

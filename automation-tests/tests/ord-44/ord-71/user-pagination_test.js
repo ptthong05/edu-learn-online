@@ -1,6 +1,6 @@
-Feature('ORD-70 - View User List');
+Feature('ORD-71 - User Pagination');
 
-Scenario('Admin can view user list', ({ I }) => {
+Scenario('Admin can paginate user list ORD-71', ({ I }) => {
 
     I.amOnPage('/');
 
@@ -9,12 +9,13 @@ Scenario('Admin can view user list', ({ I }) => {
     I.wait(3);
 
     I.fillField('input[type="email"]','manage@edulearn.vn');
+
     I.fillField('input[type="password"]','admin123');
 
     I.click('Đăng nhập');
 
     I.wait(5);
 
-    I.saveScreenshot('ord70-user-list');
+    I.saveScreenshot('ord71-pagination');
 
 });

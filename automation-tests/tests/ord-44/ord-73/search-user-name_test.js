@@ -1,6 +1,6 @@
-Feature('ORD-72 - Search User Email');
+Feature('ORD-73 - Search User Name');
 
-Scenario('Admin searches user by email', ({ I }) => {
+Scenario('Admin searches user by name ORD-73', ({ I }) => {
 
     I.amOnPage('/');
 
@@ -9,12 +9,13 @@ Scenario('Admin searches user by email', ({ I }) => {
     I.wait(3);
 
     I.fillField('input[type="email"]','manage@edulearn.vn');
+
     I.fillField('input[type="password"]','admin123');
 
     I.click('Đăng nhập');
 
     I.wait(5);
 
-    I.saveScreenshot('ord72-search-email');
+    I.saveScreenshot('ord73-search-name');
 
 });
