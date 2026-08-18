@@ -1,6 +1,6 @@
 Feature('ORD-24 - KPI Total Orders');
 
-Scenario('Total Orders KPI is displayed', ({ I }) => {
+Scenario('Total Orders KPI is displayed ORD-24', ({ I }) => {
 
     I.amOnPage('/');
 

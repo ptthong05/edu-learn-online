@@ -1,6 +1,6 @@
 Feature('ORD-25 - KPI New Users');
 
-Scenario('New Users KPI is displayed', ({ I }) => {
+Scenario('New Users KPI is displayed ORD-25', ({ I }) => {
 
     I.amOnPage('/');
 

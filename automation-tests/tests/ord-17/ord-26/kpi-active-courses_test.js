@@ -1,6 +1,6 @@
 Feature('ORD-26 - KPI Active Courses');
 
-Scenario('Active Courses KPI is displayed', ({ I }) => {
+Scenario('Active Courses KPI is displayed ORD-26', ({ I }) => {
 
     I.amOnPage('/');
 

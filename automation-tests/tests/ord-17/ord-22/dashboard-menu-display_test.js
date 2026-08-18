@@ -1,6 +1,6 @@
 Feature('ORD-22 - Dashboard Menu Display');
 
-Scenario('Dashboard menu displays correctly', ({ I }) => {
+Scenario('Dashboard displays menu correctly ORD-22', ({ I }) => {
 
     I.amOnPage('/');
 

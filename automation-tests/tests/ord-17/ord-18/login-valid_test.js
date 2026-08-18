@@ -1,12 +1,10 @@
 Feature('ORD-18 - Admin Login Valid Account');
 
-Scenario('Admin can login with valid account', ({ I }) => {
+Scenario('Admin can login with valid account ORD-18', ({ I }) => {
 
-    I.amOnPage('/');
+    I.amOnPage('/admin/login');
 
-    I.click('Đăng nhập');
-
-    I.wait(3);
+    I.wait(5);
 
     I.fillField(
         'input[type="email"]',
@@ -18,10 +16,10 @@ Scenario('Admin can login with valid account', ({ I }) => {
         'admin123'
     );
 
-    I.click('Đăng nhập');
+    I.click('button[type="submit"]');
 
     I.wait(5);
 
-    I.saveScreenshot('after-login');
+    I.saveScreenshot('ord18-login-valid');
 
 });
