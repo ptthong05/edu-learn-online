@@ -8,7 +8,7 @@ Scenario('ORD-231: Đăng ký với email đã tồn tại', ({ I }) => {
     password: 'User@2005..'
   };
 
-  // 1. Truy cập trang đăng ký (/register)
+  // 1. Truy cập trang đăng ký 
   I.amOnPage('/register');
   I.see('Đăng ký tài khoản');
 
