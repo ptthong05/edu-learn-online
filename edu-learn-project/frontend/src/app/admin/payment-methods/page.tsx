@@ -113,7 +113,7 @@ export default function PaymentMethodsPage() {
       method_name: method.method_name,
       icon: method.icon || '',
       description: method.description || '',
-      account_number: method.account_number || '',
+      account_number: method.account_number || method.phone_number || '',
       account_holder: method.account_holder || '',
       bank_name: method.bank_name || '',
       bank_code: method.bank_code || '',

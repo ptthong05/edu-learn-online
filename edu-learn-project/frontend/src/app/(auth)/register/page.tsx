@@ -97,7 +97,7 @@ export default function RegisterPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <Input label="Họ và tên" placeholder="Nguyễn Văn A" value={name} onChange={e => setName(e.target.value)} error={errors.name} />
         <Input label="Email" type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} error={errors.email} />
         <Input label="Số điện thoại" type="tel" placeholder="Ví dụ: 0912345678" value={phone} onChange={e => setPhone(e.target.value)} error={errors.phone} />
