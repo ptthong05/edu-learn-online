@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
+import { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/lib/utils/helpers';
 
-interface ButtonProps {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
@@ -15,7 +15,7 @@ interface ButtonProps {
 
 export default function Button({
   children, variant = 'primary', size = 'md', className = '',
-  onClick, type = 'button', disabled = false, loading = false, fullWidth = false
+  onClick, type = 'button', disabled = false, loading = false, fullWidth = false, ...props
 }: ButtonProps) {
   const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2';
   
@@ -36,6 +36,7 @@ export default function Button({
   return (
     <button
       type={type}
+      formNoValidate
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
@@ -44,6 +45,7 @@ export default function Button({
         (disabled || loading) && 'opacity-50 cursor-not-allowed pointer-events-none',
         className
       )}
+      {...props}
     >
       {loading && (
         <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
