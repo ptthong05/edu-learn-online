@@ -5,7 +5,7 @@ Scenario('ORD-114 - View affiliate list as Admin', ({ I }) => {
 
   I.fillField('input[type="email"]', 'manager@edulearn.vn');
   I.fillField('input[type="password"]', 'admin123');
-  I.click('Đăng nhập →');
+  I.click('button[type="submit"]');
 
   I.waitForText('Nguyễn Văn A', 10);
 

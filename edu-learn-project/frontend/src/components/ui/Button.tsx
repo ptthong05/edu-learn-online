@@ -36,7 +36,6 @@ export default function Button({
   return (
     <button
       type={type}
-      formNoValidate
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(

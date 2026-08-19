@@ -146,9 +146,13 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <Button type="submit" fullWidth size="lg" loading={loading} className="!bg-gray-900 hover:!bg-gray-800 !rounded-xl font-semibold tracking-wide">
-          Đăng nhập
-        </Button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3 px-6 rounded-xl font-semibold tracking-wide text-white bg-gray-900 hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
+        >
+          {loading ? 'Đang xử lý...' : 'Đăng nhập →'}
+        </button>
       </form>
 
       <p className="text-center text-sm text-gray-500 mt-6">
