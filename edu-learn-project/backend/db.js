@@ -546,6 +546,10 @@ async function initDatabase() {
     );
     await database.run(
       `INSERT INTO users (id, full_name, email, password, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ['u-manager-alias', 'Admin Manager', 'manage@edulearn.vn', managerPassword, 'MANAGER', 'active', now]
+    );
+    await database.run(
+      `INSERT INTO users (id, full_name, email, password, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       ['u-2', 'Trần Thị B', 'staff@edulearn.vn', staffPassword, 'STAFF', 'active', now]
     );
     await database.run(

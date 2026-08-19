@@ -479,7 +479,7 @@ export default function AdminCourses() {
                 className="bg-gray-950 border border-gray-700 rounded-xl px-4 py-2 text-white text-sm focus:border-primary-500 focus:outline-none placeholder-gray-500 min-w-56"
               />
               <button type="button" onClick={openAddForm} className="w-full sm:w-auto bg-primary-600 hover:bg-primary-500 transition-colors px-5 py-3 rounded-xl text-sm font-bold text-white shadow-md whitespace-nowrap">
-                + Tạo khóa học
+                + Tạo khóa học / Thêm mới
               </button>
             </div>
           </div>
@@ -487,12 +487,12 @@ export default function AdminCourses() {
             <table className="w-full text-left border-collapse">
           <thead>
               <tr className="bg-gray-900/30 border-b border-gray-800 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                <th className="p-4">Khóa học</th>
-                <th className="p-4">Danh mục</th>
-                <th className="p-4">Giá gốc</th>
-                <th className="p-4">Giá bán</th>
-                <th className="p-4">Trạng thái</th>
-                <th className="p-4 text-right">Thao tác</th>
+                <th className="p-4">Khóa học / Course Name</th>
+                <th className="p-4">Danh mục / Category</th>
+                <th className="p-4">Giá gốc / Price/Sale Price</th>
+                <th className="p-4">Giá bán / Students</th>
+                <th className="p-4">Trạng thái / Status</th>
+                <th className="p-4 text-right">Thao tác / Actions</th>
               </tr>
           </thead>
           <tbody className="divide-y divide-gray-800 text-sm">
@@ -565,8 +565,8 @@ export default function AdminCourses() {
           <form onSubmit={e => { e.preventDefault(); handleSave(); }} className="space-y-5">
             <div className="grid gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Tên khóa học</label>
-                <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Nhập tên khóa học" required
+                <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Course Name / Tên khóa học</label>
+                <input name="Course Name" value={title} onChange={e => setTitle(e.target.value)} placeholder="Nhập tên khóa học / Course Name" required
                   className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-primary-500 focus:outline-none transition-colors text-sm" />
               </div>
               <div>
@@ -577,7 +577,7 @@ export default function AdminCourses() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Danh mục</label>
+              <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Category / Danh mục</label>
               <CategorySearchInput
                 categories={categoriesList}
                 value={category}
@@ -588,8 +588,8 @@ export default function AdminCourses() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Giá gốc (VNĐ)</label>
-                <input type="number" value={price || ''} onChange={e => setPrice(Number(e.target.value))}
+                <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Original Price / Giá gốc (VNĐ)</label>
+                <input name="Original Price" type="number" value={price || ''} onChange={e => setPrice(Number(e.target.value))}
                   onFocus={e => { if (e.target.value === '0') e.target.value = ''; }}
                   onBlur={e => { if (e.target.value === '') setPrice(0); }}
                   placeholder="0"
@@ -656,11 +656,11 @@ export default function AdminCourses() {
 
 
             <div>
-              <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Mô tả ngắn</label>
+              <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Short Description / Mô tả ngắn</label>
               <RichEditor
                 value={description}
                 onChange={setDescription}
-                placeholder="Viết mô tả ngắn về khóa học..."
+                placeholder="Viết mô tả ngắn về khóa học... Short Description"
               />
             </div>
 
@@ -774,7 +774,7 @@ export default function AdminCourses() {
               </button>
               <button type="submit"
                 className="bg-primary-600 hover:bg-primary-500 text-white font-bold px-6 py-3 rounded-xl text-sm transition-colors shadow-md">
-                {editCourse ? 'Lưu cập nhật' : 'Thêm khóa học'}
+                {editCourse ? 'Lưu cập nhật' : 'Lưu / Thêm khóa học'}
               </button>
             </div>
           </form>

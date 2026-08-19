@@ -147,7 +147,7 @@ export default function LoginPage() {
         </div>
 
         <Button type="submit" fullWidth size="lg" loading={loading} className="!bg-gray-900 hover:!bg-gray-800 !rounded-xl font-semibold tracking-wide">
-          Đăng nhập →
+          Đăng nhập
         </Button>
       </form>
 
