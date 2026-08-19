@@ -24,6 +24,8 @@ Scenario('ORD-199: Bật một phương thức thanh toán', async ({ I }) => {
   // Precondition: Đảm bảo phương thức đang ở trạng thái Tắt (Ẩn) trước khi thực hiện test
   I.click('//tr[contains(., "Ví MoMo")]//button[contains(., "Sửa")]');
   I.waitForText('Chỉnh sửa phương thức', 5);
+  I.fillField('input[placeholder="0377987457"]', '0377987457');
+  I.fillField('input[placeholder="Phạm Tấn Thông"]', 'Phạm Tấn Thông');
   I.selectOption('form select', '0'); // Ẩn
   I.click('Lưu cập nhật');
   I.waitForText('Cập nhật thành công!', 5);
@@ -32,6 +34,8 @@ Scenario('ORD-199: Bật một phương thức thanh toán', async ({ I }) => {
   // 2. Bước 1: Đổi Status sang Bật (Hoạt động)
   I.click('//tr[contains(., "Ví MoMo")]//button[contains(., "Sửa")]');
   I.waitForText('Chỉnh sửa phương thức', 5);
+  I.fillField('input[placeholder="0377987457"]', '0377987457');
+  I.fillField('input[placeholder="Phạm Tấn Thông"]', 'Phạm Tấn Thông');
   I.selectOption('form select', '1'); // Hoạt động
 
   // 3. Bước 2: Nhấn Lưu cập nhật
@@ -40,21 +44,22 @@ Scenario('ORD-199: Bật một phương thức thanh toán', async ({ I }) => {
   I.seeElement('//tr[contains(., "Ví MoMo")]//span[contains(., "Hoạt động")]');
 
   // 4. Bước 3: Kiểm tra trang Checkout - Phương thức thanh toán sẽ xuất hiện
+  I.amOnPage('/checkout?buynow=true');
   I.executeScript(() => {
     sessionStorage.setItem('buyNowItem', JSON.stringify({
-      id: 'test-course-199',
+      id: 'course-1',
       type: 'course',
       course: {
-        id: 'test-course-199',
-        title: 'Khóa học Node.js Nâng Cao',
-        price: 299000,
-        sale_price: 299000,
+        id: 'course-1',
+        title: 'Lập trình Web Full Stack',
+        price: 1200000,
+        sale_price: 790000,
         image: ''
       },
       quantity: 1
     }));
+    window.location.reload();
   });
-  I.amOnPage('/checkout?buynow=true');
   I.waitForText('Phương thức thanh toán', 10);
   I.see('Ví MoMo');
   I.see('Thẻ ATM / Internet Banking');

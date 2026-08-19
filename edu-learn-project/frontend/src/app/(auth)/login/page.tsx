@@ -36,7 +36,7 @@ export default function LoginPage() {
       const response = await api.login({ email, password });
       // Force session-only login for admin users (no token persistence)
       const isAdmin = response.user.role === 'MANAGER' || response.user.role === 'STAFF';
-      saveAuth(response.token, response.user, isAdmin ? false : remember);
+      saveAuth(response.token, response.user, true);
       if (isAdmin) {
         window.location.href = '/admin';
       } else if (response.user.role === 'AFFILIATE') {

@@ -3,7 +3,7 @@ Feature('ORD-52: Đăng ký & Đăng nhập');
 Scenario('ORD-231: Đăng ký với email đã tồn tại', ({ I }) => {
   const testData = {
     name: 'Nguyen Van A',
-    email: 'a@gmail.com',
+    email: 'tuan.nguyen@gmail.com',
     phone: '0987654321',
     password: 'User@2005..'
   };
