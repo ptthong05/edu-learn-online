@@ -40,21 +40,22 @@ Scenario('ORD-200: Cấu hình Account Details cho Bank Transfer', async ({ I })
   I.waitForText('Cập nhật thành công!', 5);
 
   // 5. Kiểm tra thông tin hiển thị tại trang Checkout
+  I.amOnPage('/checkout?buynow=true');
   I.executeScript(() => {
     sessionStorage.setItem('buyNowItem', JSON.stringify({
-      id: 'test-course-200',
+      id: 'course-1',
       type: 'course',
       course: {
-        id: 'test-course-200',
-        title: 'Khóa học Node.js Nâng Cao',
-        price: 299000,
-        sale_price: 299000,
+        id: 'course-1',
+        title: 'Lập trình Web Full Stack',
+        price: 1200000,
+        sale_price: 790000,
         image: ''
       },
       quantity: 1
     }));
+    window.location.reload();
   });
-  I.amOnPage('/checkout?buynow=true');
   I.waitForText('Phương thức thanh toán', 10);
   I.waitForText('Thanh toán ngay', 10);
   I.click('Thẻ ATM / Internet Banking');

@@ -3,7 +3,7 @@ Feature('ORD-52: Đăng ký & Đăng nhập');
 Scenario('ORD-233: Đăng ký với định dạng email không hợp lệ', ({ I }) => {
   const testData = {
     name: 'Nguyen Van A',
-    invalidEmail: 'abc.co',
+    invalidEmail: 'invalid@format',
     phone: '0912345678',
     password: 'User@2005..'
   };

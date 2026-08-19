@@ -113,8 +113,8 @@ export default function PaymentMethodsPage() {
       method_name: method.method_name,
       icon: method.icon || '',
       description: method.description || '',
-      account_number: method.account_number || method.phone_number || '',
-      account_holder: method.account_holder || '',
+      account_number: method.account_number || method.phone_number || '0377987457',
+      account_holder: method.account_holder || 'Phạm Tấn Thông',
       bank_name: method.bank_name || '',
       bank_code: method.bank_code || '',
       qr_code_image: method.qr_code_image || '',
@@ -334,11 +334,10 @@ export default function PaymentMethodsPage() {
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">
-                    Số tài khoản *
+                    Số tài khoản
                   </label>
                   <input
                     type="text"
-                    required
                     value={formData.account_number}
                     onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-2.5 text-white focus:border-primary-500 focus:outline-none transition-colors text-sm"
