@@ -2,15 +2,13 @@ Feature('ORD-24 - KPI Total Orders');
 
 Scenario('Total Orders KPI is displayed ORD-24', ({ I }) => {
 
-    I.amOnPage('/');
+    I.amOnPage('/login');
 
-    I.click('Đăng nhập');
-
-    I.wait(3);
+    I.wait(2);
 
     I.fillField(
         'input[type="email"]',
-        'manage@edulearn.vn'
+        'manager@edulearn.vn'
     );
 
     I.fillField(
@@ -18,7 +16,7 @@ Scenario('Total Orders KPI is displayed ORD-24', ({ I }) => {
         'admin123'
     );
 
-    I.click('Đăng nhập');
+    I.click('button[type="submit"]');
 
     I.wait(5);
 

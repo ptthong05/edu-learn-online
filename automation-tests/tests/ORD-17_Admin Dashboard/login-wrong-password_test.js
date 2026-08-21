@@ -2,17 +2,15 @@ Feature('ORD-21 - Wrong Password');
 
 Scenario('Admin login failed with wrong password', ({ I }) => {
 
-    I.amOnPage('/');
+    I.amOnPage('/login');
 
-    I.click('Đăng nhập');
+    I.wait(2);
 
-    I.wait(3);
-
-    I.fillField('input[type="email"]','manage@edulearn.vn');
+    I.fillField('input[type="email"]','manager@edulearn.vn');
 
     I.fillField('input[type="password"]','wrongpassword');
 
-    I.click('Đăng nhập');
+    I.click('button[type="submit"]');
 
     I.wait(5);
 

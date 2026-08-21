@@ -4,7 +4,7 @@ Before(({ I }) => {
     I.amOnPage('/login');
     I.fillField('input[type="email"]', 'manager@edulearn.vn');
     I.fillField('input[type="password"]', 'admin123');
-    I.click('Đăng nhập');
+    I.click('button[type="submit"]');
     I.wait(3);
 });
 

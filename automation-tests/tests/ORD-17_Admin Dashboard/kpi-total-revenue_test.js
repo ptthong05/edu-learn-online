@@ -2,15 +2,13 @@ Feature('ORD-23 - KPI Total Revenue');
 
 Scenario('Total Revenue KPI is displayed ORD-23', ({ I }) => {
 
-    I.amOnPage('/');
+    I.amOnPage('/login');
 
-    I.click('Đăng nhập');
-
-    I.wait(3);
+    I.wait(2);
 
     I.fillField(
         'input[type="email"]',
-        'manage@edulearn.vn'
+        'manager@edulearn.vn'
     );
 
     I.fillField(
@@ -18,7 +16,7 @@ Scenario('Total Revenue KPI is displayed ORD-23', ({ I }) => {
         'admin123'
     );
 
-    I.click('Đăng nhập');
+    I.click('button[type="submit"]');
 
     I.wait(5);
 

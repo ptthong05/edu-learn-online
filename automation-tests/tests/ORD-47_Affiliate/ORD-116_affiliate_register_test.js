@@ -6,7 +6,7 @@ Scenario('ORD-116 - User registers to become Affiliate', async ({ I }) => {
   I.amOnPage('/login');
   I.fillField('input[type="email"]', 'tuan.nguyen@gmail.com');
   I.fillField('input[type="password"]', 'user123');
-  I.click('Đăng nhập');
+  I.click('button[type="submit"]');
   I.waitForText('Nguyễn Minh Tuấn', 10);
 
   // 2. Mở trang Affiliate trong Account

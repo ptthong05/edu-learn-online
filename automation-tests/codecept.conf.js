@@ -9,6 +9,7 @@ exports.config = {
       browser: 'chromium',
       url: 'http://localhost:3000',
       show: false,
+      restart: 'context',
       windowSize: '1280x900',
       waitForTimeout: 10000,
       waitForAction: 500

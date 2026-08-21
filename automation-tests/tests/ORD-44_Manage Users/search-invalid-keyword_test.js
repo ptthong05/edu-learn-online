@@ -2,17 +2,15 @@ Feature('ORD-74 - Search Invalid Keyword');
 
 Scenario('Admin searches non existing user', ({ I }) => {
 
-    I.amOnPage('/');
+    I.amOnPage('/login');
 
-    I.click('Đăng nhập');
+    I.wait(2);
 
-    I.wait(3);
-
-    I.fillField('input[type="email"]', 'manage@edulearn.vn');
+    I.fillField('input[type="email"]', 'manager@edulearn.vn');
 
     I.fillField('input[type="password"]', 'admin123');
 
-    I.click('Đăng nhập');
+    I.click('button[type="submit"]');
 
     I.wait(5);
 

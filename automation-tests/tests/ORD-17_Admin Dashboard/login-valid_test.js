@@ -8,7 +8,7 @@ Scenario('Admin can login with valid account ORD-18', ({ I }) => {
 
     I.fillField(
         'input[type="email"]',
-        'manage@edulearn.vn'
+        'manager@edulearn.vn'
     );
 
     I.fillField(
