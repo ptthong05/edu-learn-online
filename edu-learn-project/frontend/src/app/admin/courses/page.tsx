@@ -479,7 +479,7 @@ export default function AdminCourses() {
                 className="bg-gray-950 border border-gray-700 rounded-xl px-4 py-2 text-white text-sm focus:border-primary-500 focus:outline-none placeholder-gray-500 min-w-56"
               />
               <button type="button" onClick={openAddForm} className="w-full sm:w-auto bg-primary-600 hover:bg-primary-500 transition-colors px-5 py-3 rounded-xl text-sm font-bold text-white shadow-md whitespace-nowrap">
-                + Tạo khóa học / Thêm mới
+                + Tạo khóa học
               </button>
             </div>
           </div>

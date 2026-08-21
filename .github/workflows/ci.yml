@@ -6,12 +6,22 @@ on:
       - main
       - develop
       - 'tests/**'
+      - 'test/**'
+      - 'feature/**'
+      - 'auth-flow'
+      - 'auth/**'
+      - '**'
 
   pull_request:
     branches:
       - main
       - develop
       - 'tests/**'
+      - 'test/**'
+      - 'feature/**'
+      - 'auth-flow'
+      - 'auth/**'
+      - '**'
 
   workflow_dispatch:
 
@@ -192,14 +202,14 @@ jobs:
         run: |
           echo "Waiting for Frontend on port 3000..."
 
-          for i in {1..30}; do
+          for i in {1..45}; do
 
             if curl -s http://localhost:3000/login > /dev/null; then
               echo "Frontend is ready!"
               exit 0
             fi
 
-            echo "Waiting... ($i/30)"
+            echo "Waiting... ($i/45)"
             sleep 2
 
           done

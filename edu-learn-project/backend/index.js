@@ -44,6 +44,15 @@ const upload = multer({
 // Initialize DB
 initDatabase();
 
+// Healthcheck routes
+app.get('/', (_req, res) => {
+  res.json({ status: 'ok', message: 'EduLearn API is running' });
+});
+
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', message: 'EduLearn API is healthy' });
+});
+
 const JWT_SECRET = process.env.JWT_SECRET || 'edulearn_super_secret_key_123!@#';
 
 function parseCourseHighlights(value) {
