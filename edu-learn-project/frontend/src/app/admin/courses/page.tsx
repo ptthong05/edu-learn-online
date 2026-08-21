@@ -487,12 +487,12 @@ export default function AdminCourses() {
             <table className="w-full text-left border-collapse">
           <thead>
               <tr className="bg-gray-900/30 border-b border-gray-800 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                <th className="p-4">Khóa học / Course Name</th>
-                <th className="p-4">Danh mục / Category</th>
-                <th className="p-4">Giá gốc / Price/Sale Price</th>
-                <th className="p-4">Giá bán / Students</th>
-                <th className="p-4">Trạng thái / Status</th>
-                <th className="p-4 text-right">Thao tác / Actions</th>
+                <th className="p-4">KHÓA HỌC / Course Name</th>
+                <th className="p-4">DANH MỤC / Category</th>
+                <th className="p-4">GIÁ GỐC / Price/Sale Price</th>
+                <th className="p-4">GIÁ BÁN / Students</th>
+                <th className="p-4">TRẠNG THÁI / Status</th>
+                <th className="p-4 text-right">THAO TÁC / Actions</th>
               </tr>
           </thead>
           <tbody className="divide-y divide-gray-800 text-sm">

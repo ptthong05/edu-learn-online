@@ -104,12 +104,12 @@ export default function AdminAffiliatesPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-800 bg-gray-900/50 text-xs font-bold uppercase tracking-wider text-gray-400">
-                <th className="px-6 py-4">Mã CTV</th>
-                <th className="px-6 py-4">Thông tin cá nhân</th>
-                <th className="px-6 py-4">Liên hệ & Địa chỉ</th>
-                <th className="px-6 py-4">Thông tin ngân hàng</th>
-                <th className="px-6 py-4">Trạng thái</th>
-                <th className="px-6 py-4 text-right">Thao tác</th>
+                <th className="px-6 py-4">MÃ CTV</th>
+                <th className="px-6 py-4">THÔNG TIN CÁ NHÂN</th>
+                <th className="px-6 py-4">LIÊN HỆ & ĐỊA CHỈ</th>
+                <th className="px-6 py-4">THÔNG TIN NGÂN HÀNG</th>
+                <th className="px-6 py-4">TRẠNG THÁI</th>
+                <th className="px-6 py-4 text-right">THAO TÁC</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800 text-sm text-gray-300">
