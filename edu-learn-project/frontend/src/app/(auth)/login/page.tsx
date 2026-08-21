@@ -151,7 +151,7 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full py-3 px-6 rounded-xl font-semibold tracking-wide text-white bg-gray-900 hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
         >
-          {loading ? 'Đang xử lý...' : 'Đăng nhập →'}
+          {loading ? 'Đang xử lý...' : 'Đăng nhập'}
         </button>
       </form>
 
