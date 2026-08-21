@@ -28,13 +28,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // If user is already logged in and attempts to visit auth pages
-  const publicAuthPaths = ['/login', '/register', '/forgot-password', '/reset-password'];
-  const isPublicAuthPath = publicAuthPaths.some(path => pathname === path);
-  if (token && isPublicAuthPath) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
   return NextResponse.next();
 }
 
