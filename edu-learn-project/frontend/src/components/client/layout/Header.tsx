@@ -205,7 +205,8 @@ export default function Header() {
                 </svg>
               </div>
               <button
-                type="submit"
+                type="button"
+                onClick={handleSearch}
                 className="px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors flex-shrink-0"
               >
                 Tìm kiếm
