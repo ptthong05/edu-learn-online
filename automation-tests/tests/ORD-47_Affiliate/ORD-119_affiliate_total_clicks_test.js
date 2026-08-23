@@ -6,7 +6,8 @@ Scenario('ORD-119 - Track Total Clicks of affiliate', async ({ I }) => {
   I.amOnPage('/login');
   I.fillField('input[type="email"]', 'manager@edulearn.vn');
   I.fillField('input[type="password"]', 'admin123');
-  I.click('button[type="submit"]');
+  I.click('Đăng nhập');
+  I.waitInUrl('/admin', 10);
 
   // 2. Mở trang Affiliate
   I.amOnPage('/tai-khoan?tab=affiliate');
@@ -70,7 +71,8 @@ Scenario('ORD-119 - Track Total Clicks of affiliate', async ({ I }) => {
   I.waitForElement('input[type="email"]', 10);
   I.fillField('input[type="email"]', 'manager@edulearn.vn');
   I.fillField('input[type="password"]', 'admin123');
-  I.click('button[type="submit"]');
+  I.click('Đăng nhập');
+  I.waitInUrl('/admin', 10);
 
   // 11. Mở lại báo cáo Affiliate
   I.amOnPage('/tai-khoan?tab=affiliate');

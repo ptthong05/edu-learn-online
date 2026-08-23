@@ -6,7 +6,8 @@ Scenario('ORD-118 - Commission applies to Combo order through referral link', as
   I.amOnPage('/login');
   I.fillField('input[type="email"]', 'tuan.nguyen@gmail.com');
   I.fillField('input[type="password"]', 'user123');
-  I.click('button[type="submit"]');
+  I.click('Đăng nhập');
+  I.waitForText('Nguyễn Minh Tuấn', 10);
 
   // 2. Truy cập link giới thiệu của Affiliate CTV001
   I.amOnPage('/?ref=CTV001');
@@ -58,9 +59,11 @@ Scenario('ORD-118 - Commission applies to Combo order through referral link', as
   // 9. Login Admin
   I.amOnPage('/login');
   I.waitForElement('input[type="email"]', 10);
+  I.wait(1);
   I.fillField('input[type="email"]', 'manager@edulearn.vn');
   I.fillField('input[type="password"]', 'admin123');
-  I.click('button[type="submit"]');
+  I.click('Đăng nhập');
+  I.waitInUrl('/admin', 10);
 
   // 10. Admin mở danh sách đơn hàng
   I.amOnPage('/admin/orders');
