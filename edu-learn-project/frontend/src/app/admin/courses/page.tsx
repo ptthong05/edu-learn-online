@@ -389,6 +389,14 @@ export default function AdminCourses() {
       toast.error('Vui lòng nhập tên khóa học và giá.');
       return;
     }
+    if (!category) {
+      toast.error('Vui lòng chọn Category / Danh mục.');
+      return;
+    }
+    if (!description || !description.replace(/<[^>]*>/g, '').trim()) {
+      toast.error('Vui lòng nhập Short Description / Mô tả ngắn.');
+      return;
+    }
 
     try {
       const payload = {
