@@ -13,6 +13,9 @@ Scenario('Không cho phép tạo khóa học khi bỏ trống Short Description'
     I.click('+ Tạo khóa học');
     I.wait(2);
     I.fillField('input[placeholder*="tên khóa học"]', 'ReactJS Cơ bản');
+    I.click('text=Chọn danh mục');
+    I.click('text=Lập trình Web');
     I.click('button[type="submit"]');
     I.wait(2);
+    I.see('Vui lòng nhập Short Description / Mô tả ngắn.');
 });
