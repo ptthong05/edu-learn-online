@@ -8,16 +8,39 @@ Before(({ I }) => {
     I.wait(3);
 });
 
-Scenario('Không cho phép tạo khóa học khi bỏ trống Short Description', ({ I }) => {
+Scenario('Không cho phép tạo khóa học khi chưa nhập Short Description', ({ I }) => {
     I.amOnPage('/admin/courses');
     I.click('+ Tạo khóa học');
     I.wait(2);
-    I.fillField('input[placeholder*="tên khóa học"]', 'ReactJS Cơ bản');
-    // Price is a valid required field; this scenario isolates the missing field under test.
-    I.fillField('input[placeholder="0"]', '500000');
-    I.click('text=Chọn danh mục');
+
+    // Course Name hợp lệ
+    I.fillField(
+        'input[placeholder*="tên khóa học"]',
+        'ReactJS Cơ bản'
+    );
+
+    // Price hợp lệ
+    I.fillField(
+        'input[placeholder="0"]',
+        '500000'
+    );
+
+    // Chọn Category hợp lệ
+    I.click('button[type="button"]');
+    I.wait(1);
+
     I.click('text=Lập trình Web');
+
+    // Cố tình KHÔNG nhập Short Description
+
     I.click('button[type="submit"]');
-    I.wait(2);
-    I.see('Vui lòng nhập Short Description / Mô tả ngắn.');
+
+    I.waitForText(
+        'Vui lòng nhập Short Description / Mô tả ngắn.',
+        5
+    );
+
+    I.see(
+        'Vui lòng nhập Short Description / Mô tả ngắn.'
+    );
 });
