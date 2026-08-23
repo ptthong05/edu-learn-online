@@ -11,7 +11,7 @@ Scenario('ORD-201: Luồng thanh toán đầy đủ: chọn phương thức, chu
   I.see('Đăng nhập tài khoản');
   I.fillField('input[type="email"]', userAccount.email);
   I.fillField('input[type="password"]', userAccount.password);
-  I.click('button[type="submit"]');
+  I.click('Đăng nhập');
   I.waitForText('Nguyễn Minh Tuấn', 10);
 
   // 2. Bước 1: Chọn khóa học và vào trang Checkout

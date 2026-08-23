@@ -11,7 +11,7 @@ Scenario('ORD-198: Tắt một phương thức thanh toán', async ({ I }) => {
   I.see('Đăng nhập tài khoản');
   I.fillField('input[type="email"]', adminAccount.email);
   I.fillField('input[type="password"]', adminAccount.password);
-  I.click('button[type="submit"]');
+  I.click('Đăng nhập');
 
   I.waitInUrl('/admin', 10);
   I.waitForText('Phương thức thanh toán', 10);

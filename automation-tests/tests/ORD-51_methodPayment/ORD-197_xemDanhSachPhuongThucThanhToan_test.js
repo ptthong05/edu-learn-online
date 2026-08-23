@@ -11,7 +11,7 @@ Scenario('ORD-197: Xem danh sách phương thức thanh toán', ({ I }) => {
   I.see('Đăng nhập tài khoản');
   I.fillField('input[type="email"]', adminAccount.email);
   I.fillField('input[type="password"]', adminAccount.password);
-  I.click('button[type="submit"]');
+  I.click('Đăng nhập');
 
   // 2. Chờ chuyển hướng thành công vào Admin Dashboard
   I.waitInUrl('/admin', 10);
