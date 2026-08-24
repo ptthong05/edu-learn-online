@@ -7,7 +7,7 @@ Scenario('ORD-114 - View affiliate list as Admin', ({ I }) => {
   I.fillField('input[type="password"]', 'admin123');
   I.click('Đăng nhập');
 
-  I.waitForText('Nguyễn Văn A', 10);
+  I.waitInUrl('/admin', 10);
 
   I.amOnPage('/admin/affiliates');
   I.waitForText('Quản lý đối tác Affiliate', 10);
