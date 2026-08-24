@@ -1,0 +1,22 @@
+Feature('ORD-47 - Affiliate');
+
+Scenario('ORD-114 - View affiliate list as Admin', ({ I }) => {
+  I.amOnPage('/login');
+
+  I.fillField('input[type="email"]', 'manager@edulearn.vn');
+  I.fillField('input[type="password"]', 'admin123');
+  I.click('Đăng nhập');
+
+  I.waitForText('Nguyễn Văn A', 10);
+
+  I.amOnPage('/admin/affiliates');
+  I.waitForText('Quản lý đối tác Affiliate', 10);
+
+  // Expected Result theo Jira ORD-114 hiện tại
+  I.see('MÃ CTV');
+  I.see('THÔNG TIN CÁ NHÂN');
+  I.see('LIÊN HỆ & ĐỊA CHỈ');
+  I.see('THÔNG TIN NGÂN HÀNG');
+  I.see('TRẠNG THÁI');
+  I.see('THAO TÁC');
+});
