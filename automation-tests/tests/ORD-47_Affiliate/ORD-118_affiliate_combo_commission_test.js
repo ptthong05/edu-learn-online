@@ -1,13 +1,26 @@
 Feature('ORD-47 - Affiliate');
 
 Scenario('ORD-118 - Commission applies to Combo order through referral link', async ({ I }) => {
+  const timestamp = Date.now();
+  const random8Digits = Math.floor(10000000 + Math.random() * 90000000);
+  const buyerEmail = `buyer_combo_${timestamp}@gmail.com`;
+  const buyerPhone = `09${random8Digits}`;
+  const buyerPassword = 'User@2005..';
 
-  // 1. Login bằng buyer
-  I.amOnPage('/login');
-  I.fillField('input[type="email"]', 'tuan.nguyen@gmail.com');
-  I.fillField('input[type="password"]', 'user123');
+  // 1. Đăng ký & login bằng người mua mới để đảm bảo phiên sạch
+  I.amOnPage('/register');
+  I.fillField('input[placeholder="Nguyễn Văn A"]', 'Nguyễn Mua Combo');
+  I.fillField('input[type="email"]', buyerEmail);
+  I.fillField('input[type="tel"]', buyerPhone);
+  I.fillField('input[placeholder="Tối thiểu 8 ký tự (chữ hoa, chữ thường, số, ký tự đặc biệt)"]', buyerPassword);
+  I.fillField('input[placeholder="Nhập lại mật khẩu"]', buyerPassword);
+  I.click('Đăng ký tài khoản');
+  I.waitInUrl('/login', 10);
+
+  I.fillField('input[type="email"]', buyerEmail);
+  I.fillField('input[type="password"]', buyerPassword);
   I.click('Đăng nhập');
-  I.waitForText('Nguyễn Minh Tuấn', 10);
+  I.waitForText('Nguyễn Mua Combo', 10);
 
   // 2. Truy cập link giới thiệu của Affiliate CTV001
   I.amOnPage('/?ref=CTV001');

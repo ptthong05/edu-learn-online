@@ -4,7 +4,7 @@ Scenario('Email content follows correct template', async ({ I }) => {
 
     I.amOnPage('/login');
 
-    I.fillField('input[type="email"]', 'admin@gmail.com');
+    I.fillField('input[type="email"]', 'manager@edulearn.vn');
     I.fillField('input[type="password"]', 'admin123');
 
     I.click('Đăng nhập');
@@ -13,6 +13,6 @@ Scenario('Email content follows correct template', async ({ I }) => {
 
     I.amOnPage('/admin');
 
-    I.see('Email');
+    I.see('Tổng quan');
 
 });

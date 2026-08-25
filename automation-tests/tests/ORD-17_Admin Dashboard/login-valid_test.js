@@ -2,9 +2,9 @@ Feature('ORD-18 - Admin Login Valid Account');
 
 Scenario('Admin can login with valid account ORD-18', ({ I }) => {
 
-    I.amOnPage('/admin/login');
+    I.amOnPage('/login');
 
-    I.wait(5);
+    I.wait(2);
 
     I.fillField(
         'input[type="email"]',

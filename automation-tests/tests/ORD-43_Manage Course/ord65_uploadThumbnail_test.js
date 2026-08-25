@@ -18,8 +18,8 @@ Scenario('Upload thumbnail hợp lệ khi tạo khóa học', ({ I }) => {
   I.click('text=Lập trình Web');
   I.fillField('.ql-editor', 'Mô tả upload ảnh.');
   
-  // Attach file ảnh thumbnail (đảm bảo selector input file đúng)
-  I.attachFile('input[type="file"]', 'codecept.conf.js'); // Hoặc chọn 1 file sẵn có trong repo
+  // Attach file ảnh thumbnail hợp lệ
+  I.attachFile('input[type="file"]', 'sample.png');
   
   I.click('button[type="submit"]');
   I.wait(3);
