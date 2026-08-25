@@ -538,8 +538,6 @@ async function initDatabase() {
     const staffPassword = await bcrypt.hash('staff123', 10);
     const userPassword = await bcrypt.hash('user123', 10);
 
-    const now = new Date().toISOString();
-
     await database.run(
       `INSERT INTO users (id, full_name, email, password, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       ['u-1', 'Nguyễn Văn A', 'manager@edulearn.vn', managerPassword, 'MANAGER', 'active', now]
@@ -556,93 +554,93 @@ async function initDatabase() {
       `INSERT INTO users (id, full_name, email, password, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       ['u-3', 'Nguyễn Minh Tuấn', 'tuan.nguyen@gmail.com', userPassword, 'USER', 'active', now]
     );
-
-    // Seed default categories
-    await database.run(`INSERT OR IGNORE INTO categories (id, name) VALUES ('cat-1', 'Lập trình Web')`);
-    await database.run(`INSERT OR IGNORE INTO categories (id, name) VALUES ('cat-2', 'UI/UX Design')`);
-    await database.run(`INSERT OR IGNORE INTO categories (id, name) VALUES ('cat-3', 'Marketing Online')`);
-
-    // Seed default courses
-    await database.run(`
-      INSERT OR IGNORE INTO courses (id, title, description, image, video_intro, price, sale_price, category_id, instructor, status)
-      VALUES (
-        'course-1',
-        'Lập trình Web Full Stack',
-        'Khóa học lập trình web toàn diện từ HTML, CSS, JavaScript đến React, Node.js và MongoDB.',
-        'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&q=80',
-        'https://www.youtube.com/embed/dQw4w9WgXcQ',
-        1200000,
-        790000,
-        'cat-1',
-        'Nguyễn Văn A',
-        'published'
-      )
-    `);
-
-    await database.run(`
-      INSERT OR IGNORE INTO courses (id, title, description, image, video_intro, price, sale_price, category_id, instructor, status)
-      VALUES (
-        'course-2',
-        'UI/UX Design: Từ cơ bản đến nâng cao',
-        'Học thiết kế UI/UX chuyên nghiệp với Figma.',
-        'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80',
-        'https://www.youtube.com/embed/dQw4w9WgXcQ',
-        999000,
-        699000,
-        'cat-2',
-        'Trần Thị B',
-        'published'
-      )
-    `);
-
-    // Seed default coupons
-    await database.run(`
-      INSERT OR IGNORE INTO coupons (id, code, discount, quantity, used_count, expired_date, status, usable_by, description)
-      VALUES ('coup-1', 'SALE30', 30, 100, 10, '2026-12-31', 'active', 'user', 'Giảm giá 30% cho khách hàng mới mua khóa học.')
-    `);
-    // Seed default contact info
-    await database.run(`
-      INSERT OR IGNORE INTO contact_info (id, type, value)
-      VALUES 
-        ('contact-1', 'address', 'Tòa nhà Bitexco, Số 2 Hải Triều, Q.1, TP.HCM'),
-        ('contact-2', 'phone', '1900 1234 5678'),
-        ('contact-3', 'email', 'support@drivemh.vn'),
-        ('contact-4', 'hours', '08:00 - 18:00 (Thứ 2 - Thứ 6)')
-    `);
-
-    // Seed default blogs
-    const blogContent = '<p>Chào mừng bạn đến với DRIVE MH. Nền tảng học trực tuyến hàng đầu cung cấp kiến thức từ cơ bản đến chuyên sâu về các lĩnh vực công nghệ thông tin.</p><p>Học lập trình không bao giờ là muộn. Hãy bắt đầu hành trình của bạn ngay hôm nay cùng chúng tôi!</p>';
-    await database.run(`
-      INSERT OR IGNORE INTO blogs (id, title, excerpt, content, image, created_at)
-      VALUES 
-        ('blog-1', 'Bí quyết học lập trình hiệu quả', 'Khám phá các phương pháp học tập lập trình giúp bạn nhanh chóng thành thạo ngôn ngữ.', '${blogContent}', 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80', '${now}'),
-        ('blog-2', 'UI/UX Design Xu Hướng 2026', 'Cập nhật những xu hướng thiết kế giao diện và trải nghiệm người dùng mới nhất trong năm nay.', '${blogContent}', 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80', '${now}'),
-        ('blog-3', 'Tại sao bạn nên học Data Science', 'Khoa học dữ liệu đang là lĩnh vực hấp dẫn nhất thế kỷ 21. Tìm hiểu lý do tại sao.', '${blogContent}', 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80', '${now}')
-    `);
-
-    // Seed default home banner settings
-    await database.run(`
-      INSERT OR IGNORE INTO home_banner_settings (
-        id, title_line1, title_line2, title_line3, description,
-        badge_text, floating_badge_title, floating_badge_subtitle,
-        stat1_value, stat1_label, stat2_value, stat2_label, stat3_value, stat3_label,
-        image_url
-      ) VALUES (
-        'banner-main',
-        'HỌC ONLINE',
-        'CHỦ ĐỘNG THỜI GIAN',
-        'NÂNG TẦM KỸ NĂNG',
-        'Hàng nghìn khóa học chất lượng từ các chuyên gia. Từ cơ bản đến chuyên sâu.',
-        'Hơn 1000+ khóa học chất lượng',
-        'Học mọi lúc, mọi nơi',
-        'Truy cập trọn đời sau khi mua',
-        '1000+', 'Khóa học chất lượng',
-        '200K+', 'Học viên tin tưởng',
-        '50+', 'Danh mục đa dạng',
-        'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80'
-      )
-    `);
   }
+
+  // Seed default categories
+  await database.run(`INSERT OR IGNORE INTO categories (id, name) VALUES ('cat-1', 'Lập trình Web')`);
+  await database.run(`INSERT OR IGNORE INTO categories (id, name) VALUES ('cat-2', 'UI/UX Design')`);
+  await database.run(`INSERT OR IGNORE INTO categories (id, name) VALUES ('cat-3', 'Marketing Online')`);
+
+  // Seed default courses
+  await database.run(`
+    INSERT OR IGNORE INTO courses (id, title, description, image, video_intro, price, sale_price, category_id, instructor, status)
+    VALUES (
+      'course-1',
+      'Lập trình Web Full Stack',
+      'Khóa học lập trình web toàn diện từ HTML, CSS, JavaScript đến React, Node.js và MongoDB.',
+      'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&q=80',
+      'https://www.youtube.com/embed/dQw4w9WgXcQ',
+      1200000,
+      790000,
+      'cat-1',
+      'Nguyễn Văn A',
+      'published'
+    )
+  `);
+
+  await database.run(`
+    INSERT OR IGNORE INTO courses (id, title, description, image, video_intro, price, sale_price, category_id, instructor, status)
+    VALUES (
+      'course-2',
+      'UI/UX Design: Từ cơ bản đến nâng cao',
+      'Học thiết kế UI/UX chuyên nghiệp với Figma.',
+      'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80',
+      'https://www.youtube.com/embed/dQw4w9WgXcQ',
+      999000,
+      699000,
+      'cat-2',
+      'Trần Thị B',
+      'published'
+    )
+  `);
+
+  // Seed default coupons
+  await database.run(`
+    INSERT OR IGNORE INTO coupons (id, code, discount, quantity, used_count, expired_date, status, usable_by, description)
+    VALUES ('coup-1', 'SALE30', 30, 100, 10, '2026-12-31', 'active', 'user', 'Giảm giá 30% cho khách hàng mới mua khóa học.')
+  `);
+  // Seed default contact info
+  await database.run(`
+    INSERT OR IGNORE INTO contact_info (id, type, value)
+    VALUES 
+      ('contact-1', 'address', 'Tòa nhà Bitexco, Số 2 Hải Triều, Q.1, TP.HCM'),
+      ('contact-2', 'phone', '1900 1234 5678'),
+      ('contact-3', 'email', 'support@drivemh.vn'),
+      ('contact-4', 'hours', '08:00 - 18:00 (Thứ 2 - Thứ 6)')
+  `);
+
+  // Seed default blogs
+  const blogContent = '<p>Chào mừng bạn đến với DRIVE MH. Nền tảng học trực tuyến hàng đầu cung cấp kiến thức từ cơ bản đến chuyên sâu về các lĩnh vực công nghệ thông tin.</p><p>Học lập trình không bao giờ là muộn. Hãy bắt đầu hành trình của bạn ngay hôm nay cùng chúng tôi!</p>';
+  await database.run(`
+    INSERT OR IGNORE INTO blogs (id, title, excerpt, content, image, created_at)
+    VALUES 
+      ('blog-1', 'Bí quyết học lập trình hiệu quả', 'Khám phá các phương pháp học tập lập trình giúp bạn nhanh chóng thành thạo ngôn ngữ.', '${blogContent}', 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80', '${now}'),
+      ('blog-2', 'UI/UX Design Xu Hướng 2026', 'Cập nhật những xu hướng thiết kế giao diện và trải nghiệm người dùng mới nhất trong năm nay.', '${blogContent}', 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80', '${now}'),
+      ('blog-3', 'Tại sao bạn nên học Data Science', 'Khoa học dữ liệu đang là lĩnh vực hấp dẫn nhất thế kỷ 21. Tìm hiểu lý do tại sao.', '${blogContent}', 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80', '${now}')
+  `);
+
+  // Seed default home banner settings
+  await database.run(`
+    INSERT OR IGNORE INTO home_banner_settings (
+      id, title_line1, title_line2, title_line3, description,
+      badge_text, floating_badge_title, floating_badge_subtitle,
+      stat1_value, stat1_label, stat2_value, stat2_label, stat3_value, stat3_label,
+      image_url
+    ) VALUES (
+      'banner-main',
+      'HỌC ONLINE',
+      'CHỦ ĐỘNG THỜI GIAN',
+      'NÂNG TẦM KỸ NĂNG',
+      'Hàng nghìn khóa học chất lượng từ các chuyên gia. Từ cơ bản đến chuyên sâu.',
+      'Hơn 1000+ khóa học chất lượng',
+      'Học mọi lúc, mọi nơi',
+      'Truy cập trọn đời sau khi mua',
+      '1000+', 'Khóa học chất lượng',
+      '200K+', 'Học viên tin tưởng',
+      '50+', 'Danh mục đa dạng',
+      'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80'
+    )
+  `);
 
   // Database Migrations for Coupons Table (Add usable_by & description if they do not exist)
   try {
