@@ -19,3 +19,11 @@ output/
 automation-tests/output/
 *.log
 *.pid
+
+# Temporary Jira sync files
+*.txt
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!EduLearnOnline.postman_collection.json
