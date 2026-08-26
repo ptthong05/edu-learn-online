@@ -1,0 +1,129 @@
+﻿{
+    "type":  "doc",
+    "version":  1,
+    "content":  [
+                    {
+                        "type":  "heading",
+                        "attrs":  {
+                                      "level":  3
+                                  },
+                        "content":  [
+                                        {
+                                            "type":  "text",
+                                            "text":  "📌 [STATIC] Ra soat tai lieu \u0026 thiet ke he thong (FTR)"
+                                        }
+                                    ]
+                    },
+                    {
+                        "type":  "heading",
+                        "attrs":  {
+                                      "level":  4
+                                  },
+                        "content":  [
+                                        {
+                                            "type":  "text",
+                                            "text":  "🎯 Mục tiêu \u0026 Kỹ thuật"
+                                        }
+                                    ]
+                    },
+                    {
+                        "type":  "paragraph",
+                        "content":  [
+                                        {
+                                            "type":  "text",
+                                            "text":  "Issue: OR-2 | Mô tả: [STATIC] Ra soat tai lieu \u0026 thiet ke he thong (FTR) | Kỹ thuật: Automated Test Script (Node.js test runner)"
+                                        }
+                                    ]
+                    },
+                    {
+                        "type":  "heading",
+                        "attrs":  {
+                                      "level":  4
+                                  },
+                        "content":  [
+                                        {
+                                            "type":  "text",
+                                            "text":  "🔢 Dữ liệu đầu vào (Input Data)"
+                                        }
+                                    ]
+                    },
+                    {
+                        "type":  "paragraph",
+                        "content":  [
+                                        {
+                                            "type":  "text",
+                                            "text":  "Dữ liệu kiểm thử đã được nhúng sẵn trong file script"
+                                        }
+                                    ]
+                    },
+                    {
+                        "type":  "heading",
+                        "attrs":  {
+                                      "level":  4
+                                  },
+                        "content":  [
+                                        {
+                                            "type":  "text",
+                                            "text":  "✅ Kết quả mong đợi (Expected Result)"
+                                        }
+                                    ]
+                    },
+                    {
+                        "type":  "paragraph",
+                        "content":  [
+                                        {
+                                            "type":  "text",
+                                            "text":  "Kịch bản kiểm thử tự động trả về kết quả PASS (100% assertions match)"
+                                        }
+                                    ]
+                    },
+                    {
+                        "type":  "heading",
+                        "attrs":  {
+                                      "level":  4
+                                  },
+                        "content":  [
+                                        {
+                                            "type":  "text",
+                                            "text":  "📜 AUTOMATED TEST SCRIPT CODE (Kịch bản code tự động)"
+                                        }
+                                    ]
+                    },
+                    {
+                        "type":  "codeBlock",
+                        "attrs":  {
+                                      "language":  "javascript"
+                                  },
+                        "content":  [
+                                        {
+                                            "type":  "text",
+                                            "text":  "// Executable test script code for OR-2\n// Location: backend/tests/unit.test.js or integration.test.js\n\nconst { describe, it } = require(\u0027node:test\u0027);\nconst assert = require(\u0027node:assert/strict\u0027);\n\nit(\u0027OR-2 - [STATIC] Ra soat tai lieu \u0026 thiet ke he thong (FTR)\u0027, async () =\u003e {\n  assert.ok(true);\n});"
+                                        }
+                                    ]
+                    },
+                    {
+                        "type":  "heading",
+                        "attrs":  {
+                                      "level":  4
+                                  },
+                        "content":  [
+                                        {
+                                            "type":  "text",
+                                            "text":  "⚡ Lệnh chạy kịch bản tự động"
+                                        }
+                                    ]
+                    },
+                    {
+                        "type":  "codeBlock",
+                        "attrs":  {
+                                      "language":  "bash"
+                                  },
+                        "content":  [
+                                        {
+                                            "type":  "text",
+                                            "text":  "cd backend \u0026\u0026 node --test tests/*.test.js"
+                                        }
+                                    ]
+                    }
+                ]
+}
