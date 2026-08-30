@@ -98,11 +98,3 @@ Tài liệu này xác định mục tiêu, phạm vi, chiến lược, môi trư
 * **Tạm dừng khi:** Có lỗi sập máy chủ Backend (Crash / 500) trên diện rộng hoặc CSDL bị lỗi cấu trúc ngăn cản việc chạy test.
 * **Phục hồi khi:** Bản vá lỗi (Hotfix) đã được triển khai và xác nhận hoạt động ổn định trên môi trường Test.
 
----
-
-## 6. Kế hoạch bàn giao & Ký duyệt (Sign-Off)
-
-| Vai trò | Họ và tên | Chữ ký / Trạng thái | Ngày ký |
-| :--- | :--- | :--- | :---: |
-| **Project Manager / Dev Lead** | Phạm Tấn Thông | Đã ký duyệt (Approved) | 30/08/2026 |
-| **QA Lead / Reviewer** | quangnh0472 | Chờ ký duyệt (Pending Review) | 30/08/2026 |
