@@ -11,6 +11,8 @@ async function getDatabase() {
     filename: path.join(__dirname, 'database.sqlite'),
     driver: sqlite3.Database
   });
+  // Bật kiểm tra ràng buộc Foreign Key cho SQLite
+  await db.run('PRAGMA foreign_keys = ON;');
   return db;
 }
 
@@ -152,12 +154,19 @@ async function initDatabase() {
       user_id TEXT,
       total INTEGER NOT NULL,
       payment_method TEXT NOT NULL,
-      status TEXT DEFAULT 'pending', -- pending, completed, cancelled
-      payment_status TEXT DEFAULT 'chua_thanh_toan', -- chua_thanh_toan, da_thanh_toan
+      status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'cancelled')), -- pending, completed, cancelled
+      payment_status TEXT DEFAULT 'chua_thanh_toan' CHECK (payment_status IN ('chua_thanh_toan', 'da_thanh_toan')), -- chua_thanh_toan, da_thanh_toan
       payment_proof TEXT,
+      payment_qr_content TEXT,
       created_at TEXT NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users (id)
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE RESTRICT
     )
+  `);
+
+  // Create Indexes for Orders Table
+  await database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id);
+    CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
   `);
 
   try {
@@ -174,7 +183,7 @@ async function initDatabase() {
       price INTEGER NOT NULL,
       PRIMARY KEY (order_id, course_id),
       FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE,
-      FOREIGN KEY (course_id) REFERENCES courses (id)
+      FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE RESTRICT
     )
   `);
 
