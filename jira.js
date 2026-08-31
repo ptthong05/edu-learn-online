@@ -133,7 +133,7 @@ async function getBacklog(maxResults = 50) {
   return issues;
 }
 
-async function searchIssues(jqlQuery, maxResults = 30) {
+async function searchIssues(jqlQuery, maxResults = 100) {
   const data = await jiraFetch('/rest/api/3/search/jql', {
     method: 'POST',
     body: JSON.stringify({
@@ -143,11 +143,13 @@ async function searchIssues(jqlQuery, maxResults = 30) {
     })
   });
   const issues = data.issues || [];
-  console.log(`\n🔍 Kết quả tìm kiếm JQL [${jqlQuery}] (${issues.length} issues):\n`);
+  const total = data.total !== undefined ? data.total : issues.length;
+  console.log(`\n🔍 Kết quả tìm kiếm JQL [${jqlQuery}]:`);
+  console.log(`📊 Tổng số lượng tìm thấy: ${total} tickets (Đang hiển thị ${issues.length} tickets gần nhất):\n`);
   issues.forEach((i) => {
     const key = (i.key || '').padEnd(10);
     const status = `[${i.fields?.status?.name || 'Unknown'}]`.padEnd(15);
-    const type = `(${i.fields?.issuetype?.name || 'Task'})`.padEnd(10);
+    const type = `(${i.fields?.issuetype?.name || 'Task'})`.padEnd(12);
     console.log(`${key} ${type} ${status} ${i.fields?.summary || ''}`);
   });
   console.log('');
@@ -206,10 +208,11 @@ const [,, cmd, arg1, ...rest] = process.argv;
 
       case 'search':
         if (!arg1) {
-          console.log('Cách dùng: node jira.js search "<JQL QUERY>" (ví dụ: node jira.js search "summary ~ Postman")');
+          console.log('Cách dùng: node jira.js search "<JQL QUERY>" [LIMIT] (ví dụ: node jira.js search "status != Done" 200)');
           process.exit(1);
         }
-        await searchIssues(arg1);
+        const searchLimit = parseInt(rest[0], 10) || 100;
+        await searchIssues(arg1, searchLimit);
         break;
 
       case 'comment':
