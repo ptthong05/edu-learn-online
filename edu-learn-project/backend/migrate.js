@@ -13,8 +13,8 @@ async function migrate() {
       user_id TEXT,
       total INTEGER NOT NULL,
       payment_method TEXT NOT NULL,
-      status TEXT DEFAULT 'pending',
-      payment_status TEXT DEFAULT 'chua_thanh_toan',
+      status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'cancelled')),
+      payment_status TEXT DEFAULT 'chua_thanh_toan' CHECK (payment_status IN ('chua_thanh_toan', 'da_thanh_toan')),
       payment_proof TEXT,
       payment_qr_content TEXT,
       created_at TEXT NOT NULL,
@@ -27,6 +27,12 @@ async function migrate() {
   const colNames = orderColumns.map(c => c.name).join(', ');
   await db.exec(`INSERT OR IGNORE INTO orders_new (${colNames}) SELECT ${colNames} FROM orders;`);
   await db.exec(`DROP TABLE orders; ALTER TABLE orders_new RENAME TO orders;`);
+
+  // Đảm bảo tạo lại indexes cho bảng orders
+  await db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id);
+    CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
+  `);
 
   // 2. Cập nhật bảng order_details
   await db.exec(`
