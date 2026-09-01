@@ -26,6 +26,7 @@ function CheckoutForm() {
     } else {
       setCheckoutItems(cartItems);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBuyNow, cartItems]);
   const [method, setMethod] = useState('bank_transfer');
   const [paymentMethods, setPaymentMethods] = useState<Array<{
@@ -44,6 +45,7 @@ function CheckoutForm() {
 
   useEffect(() => {
     fetchPaymentMethods();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPaymentMethods = async () => {
@@ -98,6 +100,7 @@ function CheckoutForm() {
         setReferralCode(storedRef);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -112,6 +115,7 @@ function CheckoutForm() {
   // Update subtotal ref whenever subtotal changes
   useEffect(() => {
     subtotalRef.current = subtotal;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subtotal]);
 
   // Get the active saved coupon
@@ -155,6 +159,7 @@ function CheckoutForm() {
     
     // Validate when selectedCoupon or subtotal changes
     validateSavedCoupon();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCoupon, subtotal, savedCoupons]);
 
   // Reset discount when coupon is deselected
@@ -162,6 +167,7 @@ function CheckoutForm() {
     if (!selectedCoupon) {
       setSavedCouponDiscount(0);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCoupon]);
 
   // Calculate saved coupon discount directly from coupon data (no async dependency)

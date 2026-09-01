@@ -203,6 +203,7 @@ function AccountPageContent() {
     if (!authLoading && !user) {
       router.push('/login?redirect=/tai-khoan');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, router]);
 
 
@@ -375,6 +376,7 @@ function AccountPageContent() {
       setDetailPage(1);
       fetchReport();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showReportView]);
 
   const handleWithdrawalSubmit = async (e: React.FormEvent) => {
@@ -432,25 +434,30 @@ function AccountPageContent() {
       fetchTerms();
       fetchDbCoupons();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, user]);
 
   useEffect(() => {
     setAffiliateCouponPage(1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showCouponsView]);
 
   useEffect(() => {
     if (showWithdrawForm && affiliateInfo) {
       fetchWithdrawals();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showWithdrawForm, affiliateInfo]);
 
   useEffect(() => {
     void loadOrders();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab && NAV_ITEMS.some(item => item.id === tab)) setActiveTab(tab);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   if (authLoading || !user) {

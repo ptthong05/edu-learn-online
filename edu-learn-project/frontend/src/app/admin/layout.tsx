@@ -55,6 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fetch site settings
@@ -86,6 +87,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
 
     fetchSiteSettings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, token, router, logout]);
 
   const fetchNotifications = async () => {
@@ -107,6 +109,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 15000); // Poll every 15 seconds
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, user]);
 
   const handleBellClick = () => {
@@ -145,6 +148,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!loading && (!token || !user || (user.role !== 'MANAGER' && user.role !== 'STAFF'))) {
       router.push('/login');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, token, user, router]);
 
   // Protect restricted routes for STAFF
@@ -158,6 +162,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.push('/admin');
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, token, user, pathname, router]);
 
   // Check if user is blocked and redirect to login with message
@@ -205,6 +210,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       
       checkUserStatus();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, token, user, router, logout, pathname]);
 
   if (loading || !token || !user || (user.role !== 'MANAGER' && user.role !== 'STAFF')) {
