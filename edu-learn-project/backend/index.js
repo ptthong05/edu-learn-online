@@ -525,9 +525,18 @@ app.delete('/api/admin/combos/:id', authenticateToken, checkUserStatus, requireR
 
 // ================= CHECKOUT / ORDERS =================
 app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => {
-  const { items, payment_method, total, ref, coupon_code, payment_qr_content } = req.body;
+  if (!req.body || typeof req.body !== 'object') {
+    return res.status(400).json({ message: 'Dữ liệu đơn hàng không hợp lệ.' });
+  }
+
+  const { items, payment_method, ref, coupon_code, payment_qr_content } = req.body;
+
+  if (!payment_method || typeof payment_method !== 'string' || !payment_method.trim()) {
+    return res.status(400).json({ message: 'Vui lòng chọn phương thức thanh toán.' });
+  }
+
   if (!items || !Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ message: 'Giỏ hàng trống.' });
+    return res.status(400).json({ message: 'Giỏ hàng trống hoặc không hợp lệ.' });
   }
 
   try {
@@ -537,9 +546,9 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
     let calculatedSubtotal = 0;
     const validatedItems = [];
     for (const item of items) {
-      if (!item.course_id) continue;
+      if (!item || typeof item !== 'object' || !item.course_id) continue;
       let productPrice = 0;
-      let productName = item.product_name || '';
+      let productName = typeof item.product_name === 'string' ? item.product_name : '';
 
       const course = await db.get("SELECT id, title, price, sale_price FROM courses WHERE id = ?", [item.course_id]);
       if (course) {
@@ -558,7 +567,7 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
       }
       calculatedSubtotal += productPrice;
       validatedItems.push({
-        course_id: item.course_id,
+        course_id: String(item.course_id),
         price: productPrice,
         product_name: productName
       });
@@ -577,35 +586,13 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
         [coupon_code.trim().toUpperCase()]
       );
 
-      if (!couponRecord) {
-        return res.status(400).json({ message: 'Mã giảm giá không tồn tại.' });
-      }
-      if (couponRecord.status !== 'active') {
-        return res.status(400).json({ message: 'Mã giảm giá đã bị vô hiệu hóa.' });
-      }
       const today = new Date().toISOString().split('T')[0];
-      if (couponRecord.expired_date < today) {
-        return res.status(400).json({ message: 'Mã giảm giá đã hết hạn sử dụng.' });
-      }
-      if (couponRecord.used_count >= couponRecord.quantity) {
-        return res.status(400).json({ message: 'Mã giảm giá đã hết lượt sử dụng.' });
-      }
-      const minOrder = couponRecord.min_order_amount || 0;
-      if (minOrder > 0 && calculatedSubtotal < minOrder) {
-        return res.status(400).json({
-          message: `Đơn hàng tối thiểu ${minOrder.toLocaleString('vi-VN')}đ để áp dụng mã này.`
-        });
+      const check = validateCouponEligibility(couponRecord, calculatedSubtotal, today);
+      if (!check.valid) {
+        return res.status(check.status).json({ message: check.message });
       }
 
-      if (couponRecord.discount_type === 'percent') {
-        serverDiscount = Math.round(calculatedSubtotal * couponRecord.discount / 100);
-      } else {
-        serverDiscount = Math.min(calculatedSubtotal, couponRecord.discount);
-      }
-      const maxDisc = couponRecord.max_discount || 0;
-      if (maxDisc > 0) {
-        serverDiscount = Math.min(serverDiscount, maxDisc);
-      }
+      serverDiscount = calculateCouponDiscount(couponRecord, calculatedSubtotal);
     }
 
     // 3. Tính tổng tiền cuối cùng an toàn phía server
@@ -614,8 +601,12 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
     // Check if affiliate exists and is approved
     let orderIdPrefix = 'ORD';
     let affRecord = null;
-    if (ref) {
-      affRecord = await db.get("SELECT * FROM affiliates WHERE id = ? OR ctv_code = ? OR ma_ctv = ?", [ref, ref, ref]);
+    if (ref && typeof ref === 'string' && ref.trim()) {
+      const cleanRef = ref.trim();
+      affRecord = await db.get(
+        "SELECT * FROM affiliates WHERE id = ? OR ctv_code = ? OR ma_ctv = ?",
+        [cleanRef, cleanRef, cleanRef]
+      );
       if (affRecord && affRecord.status === 'approved') {
         orderIdPrefix = affRecord.ctv_code || affRecord.ma_ctv || 'CTV';
       }
@@ -637,7 +628,7 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
         calculatedSubtotal,
         couponRecord ? couponRecord.code : null,
         serverDiscount,
-        payment_method,
+        payment_method.trim(),
         'pending',
         now,
         paymentQrContent,
@@ -698,7 +689,7 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
     if (user && user.email) {
       sendOrderConfirmationEmail(orderId, user.email, user.full_name, {
         items: orderItems,
-        total: total,
+        total: finalTotal,
         payment_method: payment_method
       }).catch(err => console.error('Failed to send order confirmation email:', err));
     }
@@ -980,29 +971,77 @@ app.get('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole(['
   }
 });
 
+// Helper: Validate coupon eligibility rules
+function validateCouponEligibility(coupon, orderAmount, todayStr) {
+  if (!coupon) {
+    return { valid: false, status: 404, message: 'Mã giảm giá không tồn tại.' };
+  }
+  if (coupon.status !== 'active') {
+    return { valid: false, status: 400, message: 'Mã giảm giá đã bị vô hiệu hóa.' };
+  }
+  if (coupon.expired_date < todayStr) {
+    return { valid: false, status: 400, message: 'Mã giảm giá đã hết hạn sử dụng.' };
+  }
+  if (coupon.used_count >= coupon.quantity) {
+    return { valid: false, status: 400, message: 'Mã giảm giá đã hết lượt sử dụng.' };
+  }
+  const minOrder = Number(coupon.min_order_amount) || 0;
+  if (minOrder > 0 && Number(orderAmount || 0) < minOrder) {
+    return {
+      valid: false,
+      status: 400,
+      message: `Đơn hàng tối thiểu ${minOrder.toLocaleString('vi-VN')}đ để áp dụng mã này.`,
+      min_order_amount: minOrder,
+    };
+  }
+  return { valid: true };
+}
+
+// Helper: Calculate discount amount with type and max discount limits
+function calculateCouponDiscount(coupon, subtotal) {
+  const amount = Math.max(0, Number(subtotal) || 0);
+  const baseDiscount = coupon.discount_type === 'percent'
+    ? Math.round(amount * coupon.discount / 100)
+    : Math.min(amount, coupon.discount);
+
+  const maxCap = Number(coupon.max_discount) || 0;
+  return maxCap > 0 ? Math.min(baseDiscount, maxCap) : baseDiscount;
+}
+
+// Helper: Normalize coupon payload
+function normalizeCouponPayload(body, existing = {}) {
+  return {
+    code: body.code !== undefined ? String(body.code).trim().toUpperCase() : existing.code,
+    discount: body.discount !== undefined ? Number(body.discount) : existing.discount,
+    quantity: body.quantity !== undefined ? Number(body.quantity) : existing.quantity,
+    expired_date: body.expired_date !== undefined ? body.expired_date : existing.expired_date,
+    status: body.status !== undefined ? body.status : (existing.status || 'active'),
+    usable_by: body.usable_by !== undefined ? body.usable_by : (existing.usable_by || 'user'),
+    description: body.description !== undefined ? body.description : (existing.description || null),
+    discount_type: body.discount_type !== undefined ? body.discount_type : (existing.discount_type || 'percent'),
+    max_discount: body.max_discount !== undefined ? Number(body.max_discount) : (existing.max_discount || 0),
+    min_order_amount: body.min_order_amount !== undefined
+      ? Number(body.min_order_amount)
+      : (existing.min_order_amount || 0),
+  };
+}
+
 app.post('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
-  const {
-    code, discount, quantity, expired_date, status, usable_by,
-    description, discount_type, max_discount, min_order_amount
-  } = req.body;
+  const { code, discount, quantity, expired_date } = req.body;
   if (!code || discount === undefined || quantity === undefined || !expired_date) {
     return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ thông tin mã giảm giá.' });
   }
   try {
     const db = await getDatabase();
     const id = `coup-${Date.now()}`;
-    const cType = discount_type || 'percent';
-    const cUsable = usable_by || 'user';
-    const cStatus = status || 'active';
-    const cMaxDiscount = max_discount || 0;
-    const cMinOrderAmount = min_order_amount || 0;
-    
+    const p = normalizeCouponPayload(req.body);
+
     await db.run(
       `INSERT INTO coupons (id, code, discount, quantity, used_count, expired_date, status, usable_by, description, discount_type, max_discount, min_order_amount)
        VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, code.toUpperCase(), discount, quantity, expired_date,
-        cStatus, cUsable, description || null, cType, cMaxDiscount, cMinOrderAmount
+        id, p.code, p.discount, p.quantity, p.expired_date,
+        p.status, p.usable_by, p.description, p.discount_type, p.max_discount, p.min_order_amount
       ]
     );
     const newCoupon = await db.get("SELECT * FROM coupons WHERE id = ?", [id]);
@@ -1017,34 +1056,24 @@ app.post('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole([
 
 app.put('/api/admin/coupons/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
   const { id } = req.params;
-  const {
-    code, discount, quantity, expired_date, status, usable_by,
-    description, discount_type, max_discount, min_order_amount
-  } = req.body;
-  
   try {
     const db = await getDatabase();
     const existing = await db.get("SELECT * FROM coupons WHERE id = ?", [id]);
     if (!existing) {
       return res.status(404).json({ message: 'Không tìm thấy mã giảm giá.' });
     }
-    
-    const cCode = code !== undefined ? code.toUpperCase() : existing.code;
-    const cDiscount = discount !== undefined ? discount : existing.discount;
-    const cQuantity = quantity !== undefined ? quantity : existing.quantity;
-    const cExpired = expired_date !== undefined ? expired_date : existing.expired_date;
-    const cStatus = status !== undefined ? status : existing.status;
-    const cUsable = usable_by !== undefined ? usable_by : existing.usable_by;
-    const cDesc = description !== undefined ? description : existing.description;
-    const cType = discount_type !== undefined ? discount_type : existing.discount_type;
-    const cMaxDiscount = max_discount !== undefined ? max_discount : existing.max_discount;
-    const cMinOrderAmount = min_order_amount !== undefined ? min_order_amount : existing.min_order_amount;
-    
+
+    const p = normalizeCouponPayload(req.body, existing);
+
     await db.run(
       `UPDATE coupons 
-       SET code = ?, discount = ?, quantity = ?, expired_date = ?, status = ?, usable_by = ?, description = ?, discount_type = ?, max_discount = ?, min_order_amount = ?
+       SET code = ?, discount = ?, quantity = ?, expired_date = ?, status = ?,
+           usable_by = ?, description = ?, discount_type = ?, max_discount = ?, min_order_amount = ?
        WHERE id = ?`,
-      [cCode, cDiscount, cQuantity, cExpired, cStatus, cUsable, cDesc, cType, cMaxDiscount, cMinOrderAmount, id]
+      [
+        p.code, p.discount, p.quantity, p.expired_date, p.status,
+        p.usable_by, p.description, p.discount_type, p.max_discount, p.min_order_amount, id
+      ]
     );
     const updatedCoupon = await db.get("SELECT * FROM coupons WHERE id = ?", [id]);
     res.json({ message: 'Cập nhật mã giảm giá thành công.', coupon: updatedCoupon });
@@ -1076,46 +1105,15 @@ app.post('/api/coupons/validate', async (req, res) => {
   try {
     const db = await getDatabase();
     const coupon = await db.get("SELECT * FROM coupons WHERE UPPER(code) = ?", [code.toUpperCase()]);
-    if (!coupon) {
-      return res.status(404).json({ valid: false, message: 'Mã giảm giá không tồn tại.' });
+    const today = new Date().toISOString().split('T')[0];
+
+    const check = validateCouponEligibility(coupon, order_amount, today);
+    if (!check.valid) {
+      return res.status(check.status).json(check);
     }
-    if (coupon.status !== 'active') {
-      return res.status(400).json({ valid: false, message: 'Mã giảm giá đã bị vô hiệu hóa.' });
-    }
-    const now = new Date().toISOString().split('T')[0];
-    if (coupon.expired_date < now) {
-      return res.status(400).json({ valid: false, message: 'Mã giảm giá đã hết hạn sử dụng.' });
-    }
-    if (coupon.used_count >= coupon.quantity) {
-      return res.status(400).json({ valid: false, message: 'Mã giảm giá đã hết lượt sử dụng.' });
-    }
-    
-    // Validate minimum order amount
-    const minOrderAmount = coupon.min_order_amount || 0;
-    if (minOrderAmount > 0 && order_amount && Number(order_amount) < minOrderAmount) {
-      return res.status(400).json({ 
-        valid: false, 
-        message: `Đơn hàng tối thiểu ${minOrderAmount.toLocaleString('vi-VN')}đ để áp dụng mã này.`,
-        min_order_amount: minOrderAmount
-      });
-    }
-    
-    // Calculate discount with max_discount limit
-    let calculatedDiscount = 0;
-    const orderTotal = Number(order_amount) || 0;
-    
-    if (coupon.discount_type === 'percent') {
-      calculatedDiscount = Math.round(orderTotal * coupon.discount / 100);
-    } else {
-      calculatedDiscount = Math.min(orderTotal, coupon.discount);
-    }
-    
-    // Apply max_discount limit if set
-    const maxDiscount = coupon.max_discount || 0;
-    if (maxDiscount > 0) {
-      calculatedDiscount = Math.min(calculatedDiscount, maxDiscount);
-    }
-    
+
+    const calculatedDiscount = calculateCouponDiscount(coupon, order_amount);
+
     res.json({
       valid: true,
       message: 'Áp dụng mã giảm giá thành công!',
