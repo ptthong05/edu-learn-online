@@ -167,6 +167,10 @@ function CheckoutForm() {
   // Calculate saved coupon discount directly from coupon data (no async dependency)
   const computedSavedCouponDiscount = (() => {
     if (!activeSavedCoupon) return 0;
+    const minOrderAmt = activeSavedCoupon.min_order_amount || 0;
+    if (minOrderAmt > 0 && subtotal < minOrderAmt) {
+      return 0; // Chặn áp mã nếu chưa đạt giá trị đơn hàng tối thiểu
+    }
     let raw = 0;
     if (activeSavedCoupon.discount_type === 'percent') {
       raw = Math.round(subtotal * activeSavedCoupon.discount / 100);

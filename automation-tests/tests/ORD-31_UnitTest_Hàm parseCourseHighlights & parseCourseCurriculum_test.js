@@ -65,9 +65,11 @@ function parseCourseCurriculum(value) {
     .filter(chapter => chapter.title || chapter.lessons.length > 0);
 }
 
+
 Feature('ORD-31: Kiểm thử đơn vị (Unit Test) - parseCourseHighlights & parseCourseCurriculum');
 
 // ==============================================================================
+
 // 1. HÀM parseCourseHighlights (ORD-32 -> ORD-36 & ORD-602)
 // ==============================================================================
 

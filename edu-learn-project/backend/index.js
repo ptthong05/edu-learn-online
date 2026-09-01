@@ -527,6 +527,55 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
   try {
     const db = await getDatabase();
 
+    // 1. Tính tổng tiền thực tế từ các sản phẩm
+    let calculatedSubtotal = 0;
+    for (const item of items) {
+      calculatedSubtotal += (Number(item.price) || 0);
+    }
+
+    // 2. Xác thực coupon phía server nếu có áp mã
+    let serverDiscount = 0;
+    let couponRecord = null;
+    if (coupon_code && typeof coupon_code === 'string' && coupon_code.trim()) {
+      couponRecord = await db.get(
+        "SELECT * FROM coupons WHERE UPPER(code) = ?",
+        [coupon_code.trim().toUpperCase()]
+      );
+
+      if (!couponRecord) {
+        return res.status(400).json({ message: 'Mã giảm giá không tồn tại.' });
+      }
+      if (couponRecord.status !== 'active') {
+        return res.status(400).json({ message: 'Mã giảm giá đã bị vô hiệu hóa.' });
+      }
+      const today = new Date().toISOString().split('T')[0];
+      if (couponRecord.expired_date < today) {
+        return res.status(400).json({ message: 'Mã giảm giá đã hết hạn sử dụng.' });
+      }
+      if (couponRecord.used_count >= couponRecord.quantity) {
+        return res.status(400).json({ message: 'Mã giảm giá đã hết lượt sử dụng.' });
+      }
+      const minOrder = couponRecord.min_order_amount || 0;
+      if (minOrder > 0 && calculatedSubtotal < minOrder) {
+        return res.status(400).json({
+          message: `Đơn hàng tối thiểu ${minOrder.toLocaleString('vi-VN')}đ để áp dụng mã này.`
+        });
+      }
+
+      if (couponRecord.discount_type === 'percent') {
+        serverDiscount = Math.round(calculatedSubtotal * couponRecord.discount / 100);
+      } else {
+        serverDiscount = Math.min(calculatedSubtotal, couponRecord.discount);
+      }
+      const maxDisc = couponRecord.max_discount || 0;
+      if (maxDisc > 0) {
+        serverDiscount = Math.min(serverDiscount, maxDisc);
+      }
+    }
+
+    // 3. Tính tổng tiền cuối cùng an toàn phía server
+    const finalTotal = Math.max(0, calculatedSubtotal - serverDiscount);
+
     // Check if affiliate exists and is approved
     let orderIdPrefix = 'ORD';
     let affRecord = null;
@@ -545,13 +594,13 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
 
     await db.run(
       "INSERT INTO orders (id, user_id, total, payment_method, status, created_at, payment_qr_content, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [orderId, req.user.id, total, payment_method, 'pending', now, paymentQrContent, 'chua_thanh_toan']
+      [orderId, req.user.id, finalTotal, payment_method, 'pending', now, paymentQrContent, 'chua_thanh_toan']
     );
 
-    if (coupon_code) {
+    if (couponRecord) {
       await db.run(
-        "UPDATE coupons SET used_count = used_count + 1 WHERE code = ?",
-        [coupon_code.toUpperCase()]
+        "UPDATE coupons SET used_count = used_count + 1 WHERE id = ?",
+        [couponRecord.id]
       );
     }
 
