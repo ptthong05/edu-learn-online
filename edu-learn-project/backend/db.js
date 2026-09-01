@@ -179,13 +179,7 @@ async function initDatabase() {
     )
   `);
 
-  // Create Indexes for Orders Table
-  await database.exec(`
-    CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id);
-    CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
-    CREATE INDEX IF NOT EXISTS idx_orders_coupon_code ON orders (coupon_code);
-  `);
-
+  // Ensure columns exist on legacy databases before creating indexes
   try {
     await database.exec("ALTER TABLE orders ADD COLUMN payment_status TEXT DEFAULT 'chua_thanh_toan'");
   } catch (err) {
@@ -207,6 +201,13 @@ async function initDatabase() {
     // Column already exists, ignore error
   }
 
+  // Create Indexes for Orders Table
+  await database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id);
+    CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
+    CREATE INDEX IF NOT EXISTS idx_orders_coupon_code ON orders (coupon_code);
+  `);
+
   // Create Order Details Table (Supports course_id and combo_id with cascade delete from orders)
   await database.exec(`
     CREATE TABLE IF NOT EXISTS order_details (
@@ -219,16 +220,16 @@ async function initDatabase() {
     )
   `);
 
-  await database.exec(`
-    CREATE INDEX IF NOT EXISTS idx_order_details_order_id ON order_details (order_id);
-    CREATE INDEX IF NOT EXISTS idx_order_details_course_id ON order_details (course_id);
-  `);
-
   try {
     await database.exec("ALTER TABLE order_details ADD COLUMN product_name TEXT");
   } catch (e) {
     // Column already exists, ignore
   }
+
+  await database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_order_details_order_id ON order_details (order_id);
+    CREATE INDEX IF NOT EXISTS idx_order_details_course_id ON order_details (course_id);
+  `);
 
   // Create Reviews Table
   await database.exec(`
