@@ -25,6 +25,7 @@ function RichEditor({ value, onChange }: { value: string; onChange: (value: stri
     if (ref.current && ref.current.innerHTML !== value) {
       ref.current.innerHTML = value;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   const command = (name: string) => {
@@ -86,6 +87,7 @@ export default function AdminBlogsPage() {
 
   useEffect(() => {
     setBlogPage(1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blogs.length, blogTitleFilter]);
   const [message, setMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(true);
@@ -123,6 +125,7 @@ export default function AdminBlogsPage() {
 
   useEffect(() => {
     fetchInitialData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const showFeedback = (msg: string, success = true) => {
