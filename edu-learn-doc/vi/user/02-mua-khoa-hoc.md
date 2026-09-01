@@ -16,6 +16,8 @@ Tài liệu hướng dẫn chi tiết quy trình tìm kiếm, chọn mua khóa h
 - Xem danh sách giáo trình chi tiết (Curriculum) và các bài giảng.
 - Đọc các điểm nổi bật (Highlights) và đánh giá (Reviews) từ học viên thực tế.
 
+![Giao diện Chi tiết khóa học](../../images/04-chi-tiet-khoa-hoc.png)
+
 ---
 
 ## 2. Quy trình Mua hàng & Thanh toán
@@ -40,26 +42,7 @@ Tài liệu hướng dẫn chi tiết quy trình tìm kiếm, chọn mua khóa h
 
 Tại trang thanh toán, hệ thống cung cấp giao diện tích hợp trực quan:
 
-```
-+-----------------------------------------------------------------------------------+
-|                                 TRANG THANH TOÁN                                  |
-+-------------------------------------------------+---------------------------------+
-|  THÔNG TIN THANH TOÁN                           |  ĐƠN HÀNG CỦA BẠN               |
-|                                                 |                                 |
-|  1. Chọn phương thức thanh toán:                |  • Khóa học Lập trình Web       |
-|     (•) 🏦 QR Code Ngân hàng (VietQR tự động)   |    Giá: 790.000 đ               |
-|     ( ) 🏧 Thẻ ATM / Internet Banking           |                                 |
-|     ( ) 🟣 Ví MoMo                              |  -----------------------------  |
-|                                                 |  Tạm tính:         790.000 đ    |
-|  2. Mã giới thiệu CTV (nếu có):                 |  Mã CTV:           [ CTV123   ] |
-|     [ CTV123             ] [ Áp dụng ]          |  Mã giảm giá:      [ SALE30   ] |
-|     (Tự động ghi nhận nếu vào từ link CTV)      |  Giảm giá (30%):  - 237.000 đ   |
-|                                                 |  -----------------------------  |
-|  3. Mã giảm giá (Voucher):                      |  TỔNG CỘNG:        553.000 đ    |
-|     [ SALE30             ] [ Áp dụng ]          |                                 |
-|                                                 |  [       ĐẶT HÀNG NGAY       ]  |
-+-------------------------------------------------+---------------------------------+
-```
+![Giao diện Giỏ hàng & Thanh toán](../../images/05-gio-hang-thanh-toan.png)
 
 #### Các tính năng tại trang Thanh toán:
 1. **Phương thức thanh toán**:

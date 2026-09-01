@@ -21,22 +21,7 @@ Biểu mẫu đăng ký yêu cầu người dùng điền đầy đủ và chín
 | **Mật khẩu** | ✅ | Tối thiểu **8 ký tự**, bắt buộc chứa đủ **4 nhóm ký tự**:<br>1. Ít nhất một chữ hoa (`A-Z`)<br>2. Ít nhất một chữ thường (`a-z`)<br>3. Ít nhất một chữ số (`0-9`)<br>4. Ít nhất một ký tự đặc biệt (`!@#$%^&*...`) | Ví dụ: `Admin@123` |
 | **Xác nhận mật khẩu** | ✅ | Phải trùng khớp 100% với giá trị đã nhập ở ô Mật khẩu | Phải giống chính xác mật khẩu |
 
-```
-+-------------------------------------------------------------+
-|                      ĐĂNG KÝ TÀI KHOẢN                      |
-|          Tham gia cùng hàng triệu khách hàng EduLearn       |
-|                                                             |
-|   Họ và tên          [ Nguyễn Văn A                       ] |
-|   Email              [ nguyenvana@gmail.com               ] |
-|   Số điện thoại      [ 0912345678                         ] |
-|   Mật khẩu           [ ********                           ] |
-|   Xác nhận mật khẩu  [ ********                           ] |
-|                                                             |
-|                [    ĐĂNG KÝ TÀI KHOẢN    ]                  |
-|                                                             |
-|          Đã có tài khoản? Đăng nhập                         |
-+-------------------------------------------------------------+
-```
+![Giao diện Đăng ký tài khoản](../../images/01-dang-ky.png)
 
 ### Bước 3: Hoàn tất đăng ký & Chuyển hướng
 - Nhấn nút **Đăng ký tài khoản**.
@@ -55,21 +40,7 @@ Biểu mẫu đăng ký yêu cầu người dùng điền đầy đủ và chín
 - **Email**: Nhập địa chỉ email đã đăng ký tài khoản.
 - **Mật khẩu**: Nhập mật khẩu tương ứng.
 
-```
-+-------------------------------------------------------------+
-|                          ĐĂNG NHẬP                          |
-|             Chào mừng bạn quay trở lại EduLearn             |
-|                                                             |
-|   Email       [ nguyenvana@gmail.com                      ] |
-|   Mật khẩu    [ ********                                  ] |
-|                                                             |
-|                                         Quên mật khẩu?      |
-|                                                             |
-|                   [    ĐĂNG NHẬP    ]                       |
-|                                                             |
-|          Chưa có tài khoản? Đăng ký ngay                    |
-+-------------------------------------------------------------+
-```
+![Giao diện Đăng nhập hệ thống](../../images/02-dang-nhap.png)
 
 ### Bước 3: Xác thực & Điều hướng
 - Nhấn nút **Đăng nhập**.
@@ -82,6 +53,9 @@ Biểu mẫu đăng ký yêu cầu người dùng điền đầy đủ và chín
 ## 3. Quên mật khẩu & Khôi phục
 
 1. Trên màn hình Đăng nhập, nhấn vào liên kết **Quên mật khẩu?** (hoặc truy cập `/forgot-password`).
+
+![Giao diện Quên mật khẩu](../../images/03-quen-mat-khau.png)
+
 2. Nhập địa chỉ **Email** đã đăng ký tài khoản và nhấn nút **Gửi yêu cầu đặt lại mật khẩu**.
 3. Hệ thống gửi đường dẫn khôi phục mật khẩu (chứa Token đặt lại bảo mật) tới hòm thư email của bạn.
 4. Mở email, nhấn vào liên kết xác nhận để chuyển đến trang Đặt lại mật khẩu (`/reset-password?token=...`).

@@ -16,18 +16,7 @@ Giao diện Quản lý Đơn hàng được thiết kế theo dạng **2 Tab chu
 1. **📋 Tab Quản lý đơn hàng**: Xem toàn bộ lịch sử đơn hàng, tra cứu nhanh, duyệt hoặc hủy đơn.
 2. **💰 Tab Xác nhận thanh toán**: Màn hình chuyên dụng để kiểm tra ảnh biên lai thanh toán và duyệt nhanh giao dịch.
 
-```
-+---------------------------------------------------------------------------------------------------------+
-| [📋 Quản lý đơn hàng]   [💰 Xác nhận thanh toán (3)]                                                     |
-|                                                                                                         |
-| Tìm kiếm: [ Nhập mã đơn/tên/email/khóa học... ]     Mã đơn hàng: [ Tất cả | Đơn CTV | Đơn thường v ]    |
-|---------------------------------------------------------------------------------------------------------|
-| Mã đơn   | Khách hàng         | Sản phẩm           | Tổng tiền | Thanh toán | Ngày tạo | Trạng thái| Thao tác  |
-|----------+--------------------+--------------------+-----------+------------+----------+-----------+-----------|
-| ORD-1001 | Nguyễn Văn A       | Lập trình Web Full | 790.000 đ | QR_BANKING | 31/08    | [Chờ duyệt] | [Duyệt][Hủy]|
-| CTV-2002 | Trần Thị B         | UI/UX Design Pro   | 699.000 đ | MOMO       | 31/08    | [Đã xong] | (Đã duyệt)|
-+---------------------------------------------------------------------------------------------------------+
-```
+![Giao diện Quản lý đơn hàng Admin](../../images/06-quan-ly-don-hang-admin.png)
 
 ---
 
@@ -58,14 +47,7 @@ Giao diện Quản lý Đơn hàng được thiết kế theo dạng **2 Tab chu
 
 Tab này gom nhóm tất cả các đơn hàng **đã có ảnh chụp bằng chứng chuyển khoản (`payment_proof`)** nhưng **chưa được duyệt thanh toán (`payment_status = 'chua_thanh_toan'`)**.
 
-```
-+---------------------------------------------------------------------------------------------------------+
-| Mã đơn hàng | Khách hàng       | Sản phẩm         | Tổng tiền | Bằng chứng TT        | Trạng thái   | Thao tác   |
-|-------------+------------------+------------------+-----------+----------------------+--------------+------------|
-| ORD-1001    | Nguyễn Văn A     | Lập trình Web    | 790.000 đ | [Ảnh Thumbnail]      | Chờ xét duyệt| [✅ Duyệt] |
-|             | 0912345678       |                  |           | (Nhấn để phóng to)   |              | [❌ Hủy]   |
-+---------------------------------------------------------------------------------------------------------+
-```
+![Modal Xác nhận thanh toán & Duyệt biên lai](../../images/07-xac-nhan-thanh-toan-modal.png)
 
 ### Quy trình duyệt biên lai:
 1. Nhấn trực tiếp vào ảnh hoặc nút **"Xem đầy đủ"** để mở cửa sổ Modal phóng to ảnh chụp màn hình biên lai chuyển khoản của khách hàng.
