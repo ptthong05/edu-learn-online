@@ -62,34 +62,43 @@ Hệ thống EduLearn được đóng gói và vận hành dưới dạng các d
 
 ---
 
-## 3. Quy trình Sao lưu Dữ liệu (Backup Guide)
+## 3. Quy trình Sao lưu Dữ liệu Bền vững (Persistent Backup Guide)
 
-Cơ sở dữ liệu của EduLearn sử dụng SQLite kết hợp với thư mục lưu trữ file tĩnh (`uploads/`). Quy trình backup cần sao lưu cả 2 thành phần này.
+Cơ sở dữ liệu của EduLearn sử dụng SQLite kết hợp với thư mục lưu trữ file tĩnh (`uploads/`). Để bảo đảm dữ liệu không bị mất khi container dừng hoặc rebuild, toàn bộ dữ liệu được gắn kết qua **Persistent Volumes / Bind Mounts** trong `docker-compose.yml`:
+* `/app/database.sqlite` $\rightarrow$ `./edu-learn-project/backend/database.sqlite`
+* `/app/uploads` $\rightarrow$ `./edu-learn-project/backend/uploads`
+* `/app/backups` $\rightarrow$ `./backups`
 
-### 3.1 Sao lưu CSDL SQLite an toàn (Online Backup)
-Để tránh hiện tượng tranh chấp ghi (Lock), sử dụng lệnh `sqlite3` online backup hoặc tiện ích `VACUUM INTO`:
+### 3.1 Sao lưu CSDL SQLite an toàn (Online Safe Backup)
+Để tránh tranh chấp ghi (Database Lock), sử dụng lệnh `VACUUM INTO` trực tiếp từ container đang chạy để ghi bản sao lưu ra thư mục `./backups/` trên host:
 
 ```bash
-# Tạo thư mục chứa bản sao lưu
-mkdir -p /opt/backups/edulearn/$(date +%Y%m%d)
+# Tạo thư mục chứa bản sao lưu trên host
+mkdir -p ./backups
 
-# 1. Sao lưu SQLite không gây khóa DB
+# 1. Sao lưu SQLite trực tiếp từ Container bằng VACUUM INTO
 docker compose exec backend node -e "
 const { getDatabase } = require('./db.js');
 (async () => {
   const db = await getDatabase();
-  const backupFile = '/app/backups/backup_' + Date.now() + '.sqlite';
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupFile = '/app/backups/backup_' + timestamp + '.sqlite';
   await db.run(\`VACUUM INTO '\${backupFile}'\`);
-  console.log('Backup created:', backupFile);
-})()"
+  console.log('✅ Backup created successfully at:', backupFile);
+  process.exit(0);
+})().catch(err => {
+  console.error('❌ Backup failed:', err);
+  process.exit(1);
+});
+"
 
-# Hoặc copy trực tiếp file database khi backend tạm dừng tải
-cp ./edu-learn-project/backend/database.sqlite /opt/backups/edulearn/$(date +%Y%m%d)/database_$(date +%H%M%S).sqlite
+# 2. Kiểm tra tính toàn vẹn (Integrity Check) của bản backup vừa tạo
+sqlite3 ./backups/$(ls -t ./backups/*.sqlite | head -n 1 | xargs -n 1 basename) "PRAGMA integrity_check;"
 ```
 
 ### 3.2 Sao lưu thư mục tệp tin tải lên (`uploads/`)
 ```bash
-tar -czvf /opt/backups/edulearn/$(date +%Y%m%d)/uploads_$(date +%H%M%S).tar.gz ./edu-learn-project/backend/uploads/
+tar -czvf ./backups/uploads_$(date +%Y%m%d_%H%M%S).tar.gz ./edu-learn-project/backend/uploads/
 ```
 
 ### 3.3 Thiết lập sao lưu tự động hàng ngày (Cron Job)
@@ -101,35 +110,37 @@ Tạo script `/opt/scripts/backup-edulearn.sh` và thêm vào `crontab -e`:
 
 ---
 
-## 4. Quy trình Phục hồi Dữ liệu (Restore Guide)
+## 4. Quy trình Phục hồi Dữ liệu Đã Kiểm Tra (Verified Restore Guide)
 
 Khi xảy ra sự cố hỏng dữ liệu hoặc thao tác nhầm, thực hiện các bước phục hồi sau:
 
-1. **Tạm dừng các dịch vụ ghi dữ liệu**:
+1. **Tạm dừng dịch vụ Backend**:
    ```bash
    docker compose stop backend
    ```
 
 2. **Lưu lại bản dữ liệu lỗi hiện tại (để đối soát nếu cần)**:
    ```bash
-   mv ./edu-learn-project/backend/database.sqlite ./edu-learn-project/backend/database.sqlite.corrupt.$(date +%s)
+   cp ./edu-learn-project/backend/database.sqlite ./edu-learn-project/backend/database.sqlite.corrupt.$(date +%s)
    ```
 
-3. **Khôi phục file SQLite từ bản Backup**:
+3. **Khôi phục file SQLite từ bản Backup đã được kiểm tra**:
    ```bash
-   cp /opt/backups/edulearn/20260831/database_020000.sqlite ./edu-learn-project/backend/database.sqlite
+   cp ./backups/backup_CHOOSE_DATE.sqlite ./edu-learn-project/backend/database.sqlite
    ```
 
-4. **Khôi phục thư mục hình ảnh uploads (nếu cần)**:
+4. **Kiểm tra tính toàn vẹn file database vừa khôi phục**:
    ```bash
-   tar -xzvf /opt/backups/edulearn/20260831/uploads_020000.tar.gz -C ./edu-learn-project/backend/
-   ```
-
-5. **Kiểm tra tính toàn vẹn và khởi động lại dịch vụ**:
-   ```bash
-   # Kiểm tra integrity của file sqlite
    sqlite3 ./edu-learn-project/backend/database.sqlite "PRAGMA integrity_check;"
-   # Khởi động lại backend
+   ```
+
+5. **Khôi phục thư mục hình ảnh uploads (nếu cần)**:
+   ```bash
+   tar -xzvf ./backups/uploads_CHOOSE_DATE.tar.gz -C ./edu-learn-project/backend/
+   ```
+
+6. **Khởi động lại dịch vụ và kiểm tra log**:
+   ```bash
    docker compose start backend
    docker compose logs -f backend
    ```
@@ -138,19 +149,25 @@ Khi xảy ra sự cố hỏng dữ liệu hoặc thao tác nhầm, thực hiện
 
 ## 5. Quy trình Hoàn tác Phiên bản (Rollback Procedure)
 
-Khi một bản phát hành mới (Release) gặp lỗi nghiêm trọng (Blocker/Critical) trên Production:
+> **CẢNH BÁO BẢO VỆ DỮ LIỆU:** Tuyệt đối **không** chạy `docker compose up -d --build` trước khi thực hiện bước sao lưu snapshot dữ liệu hiện tại (`database.sqlite` & `uploads/`) ra vị trí an toàn ngoài container!
 
 ```
 [Phát hiện lỗi nghiêm trọng] 
        ↓
-[Bước 1: Rollback Mã nguồn Git / Docker Image]
+[Bước 1: Sao lưu Snapshot Dữ liệu Hiện tại]
        ↓
-[Bước 2: Khôi phục Schema CSDL / Snapshot]
+[Bước 2: Rollback Mã nguồn Git / Docker Image]
        ↓
 [Bước 3: Khởi động lại & Chạy Health-check Test]
 ```
 
-### Bước 1: Rollback Docker Containers / Git Commit
+### Bước 1: Sao lưu Snapshot dữ liệu trước khi Rollback
+```bash
+mkdir -p ./backups/pre-rollback-$(date +%Y%m%d_%H%M%S)
+cp ./edu-learn-project/backend/database.sqlite ./backups/pre-rollback-$(date +%Y%m%d_%H%M%S)/
+```
+
+### Bước 2: Rollback Docker Containers / Git Commit
 ```bash
 # Xem lịch sử release gần nhất
 git log -n 5 --oneline
@@ -158,7 +175,7 @@ git log -n 5 --oneline
 # Checkout về commit release ổn định trước đó
 git checkout <STABLE_RELEASE_TAG_OR_COMMIT>
 
-# Build lại container ở phiên bản ổn định
+# Build lại container ở phiên bản ổn định (vẫn giữ nguyên persistent volumes)
 docker compose up -d --build
 ```
 
