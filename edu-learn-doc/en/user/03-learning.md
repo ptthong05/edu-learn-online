@@ -1,40 +1,31 @@
-﻿# Online Learning
+# Online Learning
 
 ## Accessing Purchased Courses
 
 1. Log in to your account
-2. Go to **Account → My Courses** (`/tai-khoan?tab=courses`)
+2. Go to **Account → My Courses** (`/tai-khoan?tab=courses`) or `/my-courses`
 3. Click **Start Learning** on the course you want to study
 
 ## Learning Interface
 
-### Content Sidebar
-- List of **Chapters** and **Lessons**
-- ✅ marks completed lessons
-- Overall completion progress bar
+### Content List
+- List of **Chapters** and **Lessons** in the course
+- Click any lesson to quickly navigate and play its video lecture
 
-### Learning Area
-- **Video**: Lesson video player
-- **Materials**: Download attached documents
-- **Content**: Read text-based lesson content
+### Video Player & Resources
+- **Video Player**: High-definition video lecture player with speed, volume, and fullscreen controls
+- **Course Content**: Lesson overview, highlights, and attached documents
 
-## Tracking Progress
+## Free Courses (0 VND)
 
-- Each lesson is marked **Completed** after viewing
-- The overall progress bar updates automatically
-- View detailed progress in your **Account** page
-
-## Free Courses
-
-- Some courses are provided for free
-- No payment needed – click **Enroll for Free** to add to your library
+- EduLearn offers community free courses (`0 VND`)
+- Users can filter free courses on the `/courses` catalog and place a 0 VND order to add them to their personal library
 
 ## My Courses
 
-The `/tai-khoan?tab=courses` page shows:
-- All purchased / enrolled free courses
-- Learning progress per course
-- **Continue Learning** / **Start Now** button
+The `/tai-khoan?tab=courses` and `/my-courses` page shows:
+- All owned courses and combos
+- Direct **Start Learning** button to access video lessons immediately
 
 ## Frequently Asked Questions
 

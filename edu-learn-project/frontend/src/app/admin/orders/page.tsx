@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { formatPrice } from '@/lib/utils/helpers';
 import Badge from '@/components/ui/Badge';
 import { api } from '@/lib/utils/api';
+import Pagination from '@/components/ui/Pagination';
 
 interface AdminOrder {
   id: string;
@@ -69,8 +70,12 @@ export default function AdminOrders() {
 
   const updateStatus = async (id: string, status: 'completed' | 'cancelled') => {
     try {
-      await api.updateAdminOrderStatus(id, status);
-      setOrders(prev => prev.map(order => order.id === id ? { ...order, status } : order));
+      const res = await api.updateAdminOrderStatus(id, status);
+      setOrders(prev => prev.map(order => order.id === id ? { 
+        ...order, 
+        status, 
+        payment_status: res?.payment_status || (status === 'completed' ? 'da_thanh_toan' : 'chua_thanh_toan')
+      } : order));
     } catch (error) {
       console.error('Không thể cập nhật đơn hàng:', error);
       alert('Không thể cập nhật trạng thái đơn hàng.');
@@ -82,11 +87,13 @@ export default function AdminOrders() {
       return;
     }
     try {
-      // Update payment status
-      await api.updatePaymentStatus(id, 'da_thanh_toan');
-      // Also update order status to completed
-      await api.updateAdminOrderStatus(id, 'completed');
-      setOrders(prev => prev.map(order => order.id === id ? { ...order, payment_status: 'da_thanh_toan', status: 'completed' } : order));
+      // Single atomic API call to approve both payment and completion
+      const res = await api.updateAdminOrderStatus(id, 'completed');
+      setOrders(prev => prev.map(order => order.id === id ? { 
+        ...order, 
+        payment_status: res?.payment_status || 'da_thanh_toan', 
+        status: 'completed' 
+      } : order));
       alert('Đã duyệt thanh toán và cập nhật đơn hàng thành công!');
     } catch (error) {
       console.error('Không thể duyệt thanh toán:', error);
@@ -99,8 +106,12 @@ export default function AdminOrders() {
       return;
     }
     try {
-      await api.updateAdminOrderStatus(id, 'cancelled');
-      setOrders(prev => prev.map(order => order.id === id ? { ...order, status: 'cancelled' } : order));
+      const res = await api.updateAdminOrderStatus(id, 'cancelled');
+      setOrders(prev => prev.map(order => order.id === id ? { 
+        ...order, 
+        status: 'cancelled',
+        payment_status: res?.payment_status || 'chua_thanh_toan'
+      } : order));
       alert('Đã hủy đơn hàng thành công!');
     } catch (error) {
       console.error('Không thể hủy đơn hàng:', error);
@@ -271,31 +282,11 @@ export default function AdminOrders() {
                 })}
               </tbody>
             </table>
-            {totalPages > 1 && (
-              <div className="flex justify-between items-center px-6 py-4 bg-gray-950/40 border-t border-gray-800 text-xs">
-                <p className="text-gray-400">
-                  Hiển thị trang <span className="font-semibold text-white">{currentPage}</span> trên <span className="font-semibold text-white">{totalPages}</span>
-                </p>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1.5 rounded-lg border border-gray-800 bg-gray-900 text-gray-300 hover:bg-gray-800 disabled:opacity-40 disabled:hover:bg-gray-900 transition font-bold"
-                  >
-                    Trước
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 rounded-lg border border-gray-800 bg-gray-900 text-gray-300 hover:bg-gray-800 disabled:opacity-40 disabled:hover:bg-gray-900 transition font-bold"
-                  >
-                    Sau
-                  </button>
-                </div>
-              </div>
-            )}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         )}
 
@@ -377,31 +368,11 @@ export default function AdminOrders() {
                     ))}
                   </tbody>
                 </table>
-                {paymentTotalPages > 1 && (
-                  <div className="flex justify-between items-center px-6 py-4 bg-gray-950/40 border-t border-gray-800 text-xs">
-                    <p className="text-gray-400">
-                      Hiển thị trang <span className="font-semibold text-white">{currentPage}</span> trên <span className="font-semibold text-white">{paymentTotalPages}</span>
-                    </p>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-1.5 rounded-lg border border-gray-800 bg-gray-900 text-gray-300 hover:bg-gray-800 disabled:opacity-40 disabled:hover:bg-gray-900 transition font-bold"
-                      >
-                        Trước
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage(p => Math.min(paymentTotalPages, p + 1))}
-                        disabled={currentPage === paymentTotalPages}
-                        className="px-3 py-1.5 rounded-lg border border-gray-800 bg-gray-900 text-gray-300 hover:bg-gray-800 disabled:opacity-40 disabled:hover:bg-gray-900 transition font-bold"
-                      >
-                        Sau
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={paymentTotalPages}
+                  onPageChange={setCurrentPage}
+                />
               </>
             )}
           </div>

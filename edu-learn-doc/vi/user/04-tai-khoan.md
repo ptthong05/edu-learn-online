@@ -1,4 +1,4 @@
-﻿# Quản lý Tài khoản
+# Quản lý Tài khoản
 
 ## Truy cập
 
@@ -26,9 +26,8 @@
 
 ### Tab: Khóa học của tôi
 
-- Danh sách khóa học đã mua / đăng ký
-- Tiến độ học từng khóa
-- Nút **Tiếp tục học** / **Học ngay**
+- Danh sách tất cả khóa học và Combo đã sở hữu
+- Nút **Vào học ngay** để mở trực tiếp nội dung bài giảng video
 
 ### Tab: Lịch sử đơn hàng
 

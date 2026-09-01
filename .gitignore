@@ -32,3 +32,5 @@ coverage/
 !tsconfig.json
 !.eslintrc.json
 !EduLearnOnline.postman_collection.json
+!openapi.json
+!**/openapi.json
