@@ -1,3 +1,5 @@
+'use strict';
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -17,6 +19,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json({ limit: '10mb' }));
+
+// Swagger / OpenAPI Documentation UI
+const swaggerUi = require('swagger-ui-express');
+const openapiSpec = require('./openapi.json');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
+app.get('/api/docs/openapi.json', (_req, res) => res.json(openapiSpec));
 
 // Serve uploaded files as static assets
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -56,10 +64,8 @@ app.get('/api/health', (_req, res) => {
 const JWT_SECRET = process.env.JWT_SECRET || 'edulearn_super_secret_key_123!@#';
 
 function parseCourseHighlights(value) {
-  if (Array.isArray(value)) 
-    return value.filter(item => typeof item === 'string' && item.trim());
-  if (typeof value !== 'string') 
-    return [];
+  if (Array.isArray(value)) return value.filter(item => typeof item === 'string' && item.trim());
+  if (typeof value !== 'string') return [];
   try {
     const parsed = JSON.parse(value);
     return Array.isArray(parsed) ? parsed.filter(item => typeof item === 'string' && item.trim()) : [];
@@ -236,7 +242,14 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, full_name: user.full_name, email: user.email, role: user.role, must_change_password: user.must_change_password, status: user.status },
+      {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+        must_change_password: user.must_change_password,
+        status: user.status
+      },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -512,19 +525,88 @@ app.delete('/api/admin/combos/:id', authenticateToken, checkUserStatus, requireR
 
 // ================= CHECKOUT / ORDERS =================
 app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => {
-  const { items, payment_method, total, ref, coupon_code, payment_qr_content } = req.body;
-  if (!items || items.length === 0) {
-    return res.status(400).json({ message: 'Giỏ hàng trống.' });
+  if (!req.body || typeof req.body !== 'object') {
+    return res.status(400).json({ message: 'Dữ liệu đơn hàng không hợp lệ.' });
+  }
+
+  const { items, payment_method, ref, coupon_code, payment_qr_content } = req.body;
+
+  if (!payment_method || typeof payment_method !== 'string' || !payment_method.trim()) {
+    return res.status(400).json({ message: 'Vui lòng chọn phương thức thanh toán.' });
+  }
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ message: 'Giỏ hàng trống hoặc không hợp lệ.' });
   }
 
   try {
     const db = await getDatabase();
 
+    // 1. Tính tổng tiền thực tế độc lập từ CSDL (Chống sửa giá từ client)
+    let calculatedSubtotal = 0;
+    const validatedItems = [];
+    for (const item of items) {
+      if (!item || typeof item !== 'object' || !item.course_id) continue;
+      let productPrice = 0;
+      let productName = typeof item.product_name === 'string' ? item.product_name : '';
+
+      const course = await db.get("SELECT id, title, price, sale_price FROM courses WHERE id = ?", [item.course_id]);
+      if (course) {
+        const hasSale = course.sale_price !== null && course.sale_price !== undefined;
+        productPrice = hasSale ? course.sale_price : course.price;
+        productName = course.title;
+      } else {
+        const combo = await db.get("SELECT id, title, price, sale_price FROM combos WHERE id = ?", [item.course_id]);
+        if (combo) {
+          const hasComboSale = combo.sale_price !== null && combo.sale_price !== undefined;
+          productPrice = hasComboSale ? combo.sale_price : combo.price;
+          productName = combo.title;
+        } else {
+          productPrice = Math.max(0, Number(item.price) || 0);
+        }
+      }
+      calculatedSubtotal += productPrice;
+      validatedItems.push({
+        course_id: String(item.course_id),
+        price: productPrice,
+        product_name: productName
+      });
+    }
+
+    if (validatedItems.length === 0) {
+      return res.status(400).json({ message: 'Không tìm thấy sản phẩm hợp lệ trong giỏ hàng.' });
+    }
+
+    // 2. Xác thực coupon phía server nếu có áp mã
+    let serverDiscount = 0;
+    let couponRecord = null;
+    if (coupon_code && typeof coupon_code === 'string' && coupon_code.trim()) {
+      couponRecord = await db.get(
+        "SELECT * FROM coupons WHERE UPPER(code) = ?",
+        [coupon_code.trim().toUpperCase()]
+      );
+
+      const today = new Date().toISOString().split('T')[0];
+      const check = validateCouponEligibility(couponRecord, calculatedSubtotal, today);
+      if (!check.valid) {
+        return res.status(check.status).json({ message: check.message });
+      }
+
+      serverDiscount = calculateCouponDiscount(couponRecord, calculatedSubtotal);
+    }
+
+    // 3. Tính tổng tiền cuối cùng an toàn phía server
+    const finalTotal = Math.max(0, calculatedSubtotal - serverDiscount);
+
     // Check if affiliate exists and is approved
     let orderIdPrefix = 'ORD';
     let affRecord = null;
-    if (ref) {
-      affRecord = await db.get("SELECT * FROM affiliates WHERE id = ? OR ctv_code = ? OR ma_ctv = ?", [ref, ref, ref]);
+    if (ref && typeof ref === 'string' && ref.trim()) {
+      const cleanRef = ref.trim();
+      affRecord = await db.get(
+        "SELECT * FROM affiliates WHERE id = ? OR ctv_code = ? OR ma_ctv = ?",
+        [cleanRef, cleanRef, cleanRef]
+      );
       if (affRecord && affRecord.status === 'approved') {
         orderIdPrefix = affRecord.ctv_code || affRecord.ma_ctv || 'CTV';
       }
@@ -537,18 +619,31 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
     const paymentQrContent = payment_qr_content || orderId;
 
     await db.run(
-      "INSERT INTO orders (id, user_id, total, payment_method, status, created_at, payment_qr_content, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [orderId, req.user.id, total, payment_method, 'pending', now, paymentQrContent, 'chua_thanh_toan']
+      `INSERT INTO orders (id, user_id, total, subtotal, coupon_code, discount_amount, payment_method, status, created_at, payment_qr_content, payment_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        orderId,
+        req.user.id,
+        finalTotal,
+        calculatedSubtotal,
+        couponRecord ? couponRecord.code : null,
+        serverDiscount,
+        payment_method.trim(),
+        'pending',
+        now,
+        paymentQrContent,
+        'chua_thanh_toan'
+      ]
     );
 
-    if (coupon_code) {
+    if (couponRecord) {
       await db.run(
-        "UPDATE coupons SET used_count = used_count + 1 WHERE code = ?",
-        [coupon_code.toUpperCase()]
+        "UPDATE coupons SET used_count = used_count + 1 WHERE id = ? AND used_count < quantity",
+        [couponRecord.id]
       );
     }
 
-    for (const item of items) {
+    for (const item of validatedItems) {
       await db.run(
         "INSERT INTO order_details (order_id, course_id, price, product_name) VALUES (?, ?, ?, ?)",
         [orderId, item.course_id, item.price, item.product_name || item.course_id]
@@ -594,7 +689,7 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
     if (user && user.email) {
       sendOrderConfirmationEmail(orderId, user.email, user.full_name, {
         items: orderItems,
-        total: total,
+        total: finalTotal,
         payment_method: payment_method
       }).catch(err => console.error('Failed to send order confirmation email:', err));
     }
@@ -715,7 +810,7 @@ app.put('/api/admin/website-content/:section', authenticateToken, checkUserStatu
     if (!['faqs', 'terms', 'guides', 'introductions', 'contacts'].includes(section)) return res.status(404).json({ message: 'Nhóm nội dung không hợp lệ.' });
     await db.exec('COMMIT');
     res.json({ message: 'Đã lưu nội dung website.' });
-  } catch (error) { try { const db = await getDatabase(); await db.exec('ROLLBACK'); } catch (_) {} res.status(500).json({ message: 'Không thể lưu nội dung.', error: error.message }); }
+  } catch (error) { try { const db = await getDatabase(); await db.exec('ROLLBACK'); } catch (_err) { /* ignore rollback error */ } res.status(500).json({ message: 'Không thể lưu nội dung.', error: error.message }); }
 });
 
 // ================= BLOGS =================
@@ -876,24 +971,78 @@ app.get('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole(['
   }
 });
 
+// Helper: Validate coupon eligibility rules
+function validateCouponEligibility(coupon, orderAmount, todayStr) {
+  if (!coupon) {
+    return { valid: false, status: 404, message: 'Mã giảm giá không tồn tại.' };
+  }
+  if (coupon.status !== 'active') {
+    return { valid: false, status: 400, message: 'Mã giảm giá đã bị vô hiệu hóa.' };
+  }
+  if (coupon.expired_date < todayStr) {
+    return { valid: false, status: 400, message: 'Mã giảm giá đã hết hạn sử dụng.' };
+  }
+  if (coupon.used_count >= coupon.quantity) {
+    return { valid: false, status: 400, message: 'Mã giảm giá đã hết lượt sử dụng.' };
+  }
+  const minOrder = Number(coupon.min_order_amount) || 0;
+  if (minOrder > 0 && Number(orderAmount || 0) < minOrder) {
+    return {
+      valid: false,
+      status: 400,
+      message: `Đơn hàng tối thiểu ${minOrder.toLocaleString('vi-VN')}đ để áp dụng mã này.`,
+      min_order_amount: minOrder,
+    };
+  }
+  return { valid: true };
+}
+
+// Helper: Calculate discount amount with type and max discount limits
+function calculateCouponDiscount(coupon, subtotal) {
+  const amount = Math.max(0, Number(subtotal) || 0);
+  const baseDiscount = coupon.discount_type === 'percent'
+    ? Math.round(amount * coupon.discount / 100)
+    : Math.min(amount, coupon.discount);
+
+  const maxCap = Number(coupon.max_discount) || 0;
+  return maxCap > 0 ? Math.min(baseDiscount, maxCap) : baseDiscount;
+}
+
+// Helper: Normalize coupon payload
+function normalizeCouponPayload(body, existing = {}) {
+  return {
+    code: body.code !== undefined ? String(body.code).trim().toUpperCase() : existing.code,
+    discount: body.discount !== undefined ? Number(body.discount) : existing.discount,
+    quantity: body.quantity !== undefined ? Number(body.quantity) : existing.quantity,
+    expired_date: body.expired_date !== undefined ? body.expired_date : existing.expired_date,
+    status: body.status !== undefined ? body.status : (existing.status || 'active'),
+    usable_by: body.usable_by !== undefined ? body.usable_by : (existing.usable_by || 'user'),
+    description: body.description !== undefined ? body.description : (existing.description || null),
+    discount_type: body.discount_type !== undefined ? body.discount_type : (existing.discount_type || 'percent'),
+    max_discount: body.max_discount !== undefined ? Number(body.max_discount) : (existing.max_discount || 0),
+    min_order_amount: body.min_order_amount !== undefined
+      ? Number(body.min_order_amount)
+      : (existing.min_order_amount || 0),
+  };
+}
+
 app.post('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
-  const { code, discount, quantity, expired_date, status, usable_by, description, discount_type, max_discount, min_order_amount } = req.body;
+  const { code, discount, quantity, expired_date } = req.body;
   if (!code || discount === undefined || quantity === undefined || !expired_date) {
     return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ thông tin mã giảm giá.' });
   }
   try {
     const db = await getDatabase();
     const id = `coup-${Date.now()}`;
-    const cType = discount_type || 'percent';
-    const cUsable = usable_by || 'user';
-    const cStatus = status || 'active';
-    const cMaxDiscount = max_discount || 0;
-    const cMinOrderAmount = min_order_amount || 0;
-    
+    const p = normalizeCouponPayload(req.body);
+
     await db.run(
       `INSERT INTO coupons (id, code, discount, quantity, used_count, expired_date, status, usable_by, description, discount_type, max_discount, min_order_amount)
        VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, code.toUpperCase(), discount, quantity, expired_date, cStatus, cUsable, description || null, cType, cMaxDiscount, cMinOrderAmount]
+      [
+        id, p.code, p.discount, p.quantity, p.expired_date,
+        p.status, p.usable_by, p.description, p.discount_type, p.max_discount, p.min_order_amount
+      ]
     );
     const newCoupon = await db.get("SELECT * FROM coupons WHERE id = ?", [id]);
     res.status(201).json({ message: 'Tạo mã giảm giá thành công.', coupon: newCoupon });
@@ -907,31 +1056,24 @@ app.post('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole([
 
 app.put('/api/admin/coupons/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
   const { id } = req.params;
-  const { code, discount, quantity, expired_date, status, usable_by, description, discount_type, max_discount, min_order_amount } = req.body;
-  
   try {
     const db = await getDatabase();
     const existing = await db.get("SELECT * FROM coupons WHERE id = ?", [id]);
     if (!existing) {
       return res.status(404).json({ message: 'Không tìm thấy mã giảm giá.' });
     }
-    
-    const cCode = code !== undefined ? code.toUpperCase() : existing.code;
-    const cDiscount = discount !== undefined ? discount : existing.discount;
-    const cQuantity = quantity !== undefined ? quantity : existing.quantity;
-    const cExpired = expired_date !== undefined ? expired_date : existing.expired_date;
-    const cStatus = status !== undefined ? status : existing.status;
-    const cUsable = usable_by !== undefined ? usable_by : existing.usable_by;
-    const cDesc = description !== undefined ? description : existing.description;
-    const cType = discount_type !== undefined ? discount_type : existing.discount_type;
-    const cMaxDiscount = max_discount !== undefined ? max_discount : existing.max_discount;
-    const cMinOrderAmount = min_order_amount !== undefined ? min_order_amount : existing.min_order_amount;
-    
+
+    const p = normalizeCouponPayload(req.body, existing);
+
     await db.run(
       `UPDATE coupons 
-       SET code = ?, discount = ?, quantity = ?, expired_date = ?, status = ?, usable_by = ?, description = ?, discount_type = ?, max_discount = ?, min_order_amount = ?
+       SET code = ?, discount = ?, quantity = ?, expired_date = ?, status = ?,
+           usable_by = ?, description = ?, discount_type = ?, max_discount = ?, min_order_amount = ?
        WHERE id = ?`,
-      [cCode, cDiscount, cQuantity, cExpired, cStatus, cUsable, cDesc, cType, cMaxDiscount, cMinOrderAmount, id]
+      [
+        p.code, p.discount, p.quantity, p.expired_date, p.status,
+        p.usable_by, p.description, p.discount_type, p.max_discount, p.min_order_amount, id
+      ]
     );
     const updatedCoupon = await db.get("SELECT * FROM coupons WHERE id = ?", [id]);
     res.json({ message: 'Cập nhật mã giảm giá thành công.', coupon: updatedCoupon });
@@ -963,46 +1105,15 @@ app.post('/api/coupons/validate', async (req, res) => {
   try {
     const db = await getDatabase();
     const coupon = await db.get("SELECT * FROM coupons WHERE UPPER(code) = ?", [code.toUpperCase()]);
-    if (!coupon) {
-      return res.status(404).json({ valid: false, message: 'Mã giảm giá không tồn tại.' });
+    const today = new Date().toISOString().split('T')[0];
+
+    const check = validateCouponEligibility(coupon, order_amount, today);
+    if (!check.valid) {
+      return res.status(check.status).json(check);
     }
-    if (coupon.status !== 'active') {
-      return res.status(400).json({ valid: false, message: 'Mã giảm giá đã bị vô hiệu hóa.' });
-    }
-    const now = new Date().toISOString().split('T')[0];
-    if (coupon.expired_date < now) {
-      return res.status(400).json({ valid: false, message: 'Mã giảm giá đã hết hạn sử dụng.' });
-    }
-    if (coupon.used_count >= coupon.quantity) {
-      return res.status(400).json({ valid: false, message: 'Mã giảm giá đã hết lượt sử dụng.' });
-    }
-    
-    // Validate minimum order amount
-    const minOrderAmount = coupon.min_order_amount || 0;
-    if (minOrderAmount > 0 && order_amount && Number(order_amount) < minOrderAmount) {
-      return res.status(400).json({ 
-        valid: false, 
-        message: `Đơn hàng tối thiểu ${minOrderAmount.toLocaleString('vi-VN')}đ để áp dụng mã này.`,
-        min_order_amount: minOrderAmount
-      });
-    }
-    
-    // Calculate discount with max_discount limit
-    let calculatedDiscount = 0;
-    const orderTotal = Number(order_amount) || 0;
-    
-    if (coupon.discount_type === 'percent') {
-      calculatedDiscount = Math.round(orderTotal * coupon.discount / 100);
-    } else {
-      calculatedDiscount = Math.min(orderTotal, coupon.discount);
-    }
-    
-    // Apply max_discount limit if set
-    const maxDiscount = coupon.max_discount || 0;
-    if (maxDiscount > 0) {
-      calculatedDiscount = Math.min(calculatedDiscount, maxDiscount);
-    }
-    
+
+    const calculatedDiscount = calculateCouponDiscount(coupon, order_amount);
+
     res.json({
       valid: true,
       message: 'Áp dụng mã giảm giá thành công!',
@@ -1384,38 +1495,55 @@ app.put('/api/admin/orders/:id/status', authenticateToken, checkUserStatus, requ
 
   try {
     const db = await getDatabase();
-    const result = await db.run('UPDATE orders SET status = ? WHERE id = ?', [status, req.params.id]);
-    if (result.changes === 0) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
+    const order = await db.get("SELECT * FROM orders WHERE id = ?", [req.params.id]);
+    if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
 
-    // Update corresponding affiliate_revenues status
-    let revStatus = 'pending';
-    if (status === 'completed') {
-      revStatus = 'approved';
-      // Create affiliate notifications for commission approval
-      const revenues = await db.all("SELECT * FROM affiliate_revenues WHERE order_id = ?", [req.params.id]);
-      for (const rev of revenues) {
-        const notifId = `notif-approved-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-        await db.run(
-          "INSERT INTO affiliate_notifications (id, affiliate_id, order_id, course_id, buyer_name, amount, commission, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          [notifId, rev.affiliate_id, rev.order_id, rev.course_id, rev.buyer_name, rev.order_total, rev.commission_amount, new Date().toISOString()]
-        );
-      }
-    } else if (status === 'cancelled') {
-      revStatus = 'cancelled';
-    }
-    
+    const newPaymentStatus = status === 'completed' ? 'da_thanh_toan' : 'chua_thanh_toan';
+
+    // Atomic update of both status and payment_status
     await db.run(
-      "UPDATE affiliate_revenues SET status = ? WHERE order_id = ?",
-      [revStatus, req.params.id]
+      'UPDATE orders SET status = ?, payment_status = ? WHERE id = ?',
+      [status, newPaymentStatus, req.params.id]
     );
 
-    res.json({ message: 'Đã cập nhật trạng thái đơn hàng.', status });
+    // Update corresponding affiliate_revenues status and notifications (Idempotent)
+    if (status === 'completed' && order.status !== 'completed') {
+      await db.run("UPDATE affiliate_revenues SET status = 'approved' WHERE order_id = ?", [req.params.id]);
+      
+      const revenues = await db.all("SELECT * FROM affiliate_revenues WHERE order_id = ?", [req.params.id]);
+      for (const rev of revenues) {
+        // Only insert notification if not already existing for this order approval
+        const existingNotif = await db.get(
+          "SELECT id FROM affiliate_notifications WHERE affiliate_id = ? AND order_id = ? AND course_id = ?",
+          [rev.affiliate_id, rev.order_id, rev.course_id]
+        );
+        if (!existingNotif) {
+          const notifId = `notif-approved-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+          await db.run(
+            `INSERT INTO affiliate_notifications (id, affiliate_id, order_id, course_id, buyer_name, amount, commission, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              notifId, rev.affiliate_id, rev.order_id, rev.course_id,
+              rev.buyer_name, rev.order_total, rev.commission_amount, new Date().toISOString()
+            ]
+          );
+        }
+      }
+    } else if (status === 'cancelled') {
+      await db.run("UPDATE affiliate_revenues SET status = 'cancelled' WHERE order_id = ?", [req.params.id]);
+    }
+
+    res.json({
+      message: 'Đã cập nhật trạng thái đơn hàng.',
+      status,
+      payment_status: newPaymentStatus
+    });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server.', error: error.message });
   }
 });
 
-// Update payment status
+// Update payment status (Atomically synchronized with order status)
 app.patch('/api/admin/orders/:id/payment-status', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
   const { payment_status } = req.body;
   if (!['chua_thanh_toan', 'da_thanh_toan'].includes(payment_status)) {
@@ -1424,10 +1552,44 @@ app.patch('/api/admin/orders/:id/payment-status', authenticateToken, checkUserSt
 
   try {
     const db = await getDatabase();
-    const result = await db.run('UPDATE orders SET payment_status = ? WHERE id = ?', [payment_status, req.params.id]);
-    if (result.changes === 0) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
+    const order = await db.get("SELECT * FROM orders WHERE id = ?", [req.params.id]);
+    if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
 
-    res.json({ message: 'Đã cập nhật trạng thái thanh toán.', payment_status });
+    const newOrderStatus = payment_status === 'da_thanh_toan' ? 'completed' : 'pending';
+
+    // Synchronize both payment_status and status atomically
+    await db.run(
+      'UPDATE orders SET payment_status = ?, status = ? WHERE id = ?',
+      [payment_status, newOrderStatus, req.params.id]
+    );
+
+    if (payment_status === 'da_thanh_toan' && order.status !== 'completed') {
+      await db.run("UPDATE affiliate_revenues SET status = 'approved' WHERE order_id = ?", [req.params.id]);
+      const revenues = await db.all("SELECT * FROM affiliate_revenues WHERE order_id = ?", [req.params.id]);
+      for (const rev of revenues) {
+        const existingNotif = await db.get(
+          "SELECT id FROM affiliate_notifications WHERE affiliate_id = ? AND order_id = ? AND course_id = ?",
+          [rev.affiliate_id, rev.order_id, rev.course_id]
+        );
+        if (!existingNotif) {
+          const notifId = `notif-approved-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+          await db.run(
+            `INSERT INTO affiliate_notifications (id, affiliate_id, order_id, course_id, buyer_name, amount, commission, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              notifId, rev.affiliate_id, rev.order_id, rev.course_id,
+              rev.buyer_name, rev.order_total, rev.commission_amount, new Date().toISOString()
+            ]
+          );
+        }
+      }
+    }
+
+    res.json({
+      message: 'Đã cập nhật trạng thái thanh toán.',
+      payment_status,
+      status: newOrderStatus
+    });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server.', error: error.message });
   }
@@ -1753,7 +1915,10 @@ app.get('/api/admin/courses', authenticateToken, checkUserStatus, requireRole(['
 });
 
 app.post('/api/admin/courses', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
-  const { title, description, price, sale_price, category_id, content_html, highlights, content, image, status, instructor } = req.body;
+  const {
+    title, description, price, sale_price, category_id,
+    content_html, highlights, content, image, status, instructor
+  } = req.body;
   if (!title || price === undefined) {
     return res.status(400).json({ message: 'Tên khóa học và giá là bắt buộc.' });
   }
@@ -1767,7 +1932,11 @@ app.post('/api/admin/courses', authenticateToken, checkUserStatus, requireRole([
     await db.run(
       `INSERT INTO courses (id, title, description, image, price, sale_price, category_id, content_html, highlights, curriculum, instructor, status, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, title, description || '', courseImage, price, sale_price || null, category_id || null, content_html || '', JSON.stringify(parseCourseHighlights(highlights)), JSON.stringify(parseCourseCurriculum(content)), courseInstructor, courseStatus, new Date().toISOString()]
+      [
+        id, title, description || '', courseImage, price, sale_price || null, category_id || null,
+        content_html || '', JSON.stringify(parseCourseHighlights(highlights)),
+        JSON.stringify(parseCourseCurriculum(content)), courseInstructor, courseStatus, new Date().toISOString()
+      ]
     );
     const newCourse = await db.get("SELECT * FROM courses WHERE id = ?", [id]);
     res.json(formatCourse(newCourse));
@@ -1777,7 +1946,10 @@ app.post('/api/admin/courses', authenticateToken, checkUserStatus, requireRole([
 });
 
 app.put('/api/admin/courses/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
-  const { title, description, price, sale_price, category_id, content_html, highlights, content, image, status, instructor } = req.body;
+  const {
+    title, description, price, sale_price, category_id,
+    content_html, highlights, content, image, status, instructor
+  } = req.body;
   if (!title || price === undefined) {
     return res.status(400).json({ message: 'Tên khóa học và giá là bắt buộc.' });
   }
@@ -2284,7 +2456,8 @@ app.get('/api/affiliate/notifications', authenticateToken, checkUserStatus, asyn
 });
 
 // Admin: Get all affiliate purchase notifications
-app.get('/api/admin/affiliate-notifications', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/affiliate-notifications', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const notifications = await db.all(`
@@ -2302,7 +2475,8 @@ app.get('/api/admin/affiliate-notifications', authenticateToken, checkUserStatus
 });
 
 // Admin: Aggregate successful commission rows from the affiliate revenue ledger by month and all time.
-app.get('/api/admin/affiliate-commission-stats', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/affiliate-commission-stats', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const month = /^\d{4}-\d{2}$/.test(req.query.month || '')
     ? req.query.month
     : new Date().toISOString().slice(0, 7);
@@ -2390,7 +2564,11 @@ app.post('/api/affiliate/withdrawals', authenticateToken, checkUserStatus, async
     await db.run(
       `INSERT INTO withdrawal_requests (id, affiliate_id, ctv_code, amount, bank_name, bank_account, account_holder, phone, email, status, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
-      [withdrawalId, affiliate.id, ctvCode, amount, bank_name, bank_account, affiliate.full_name, affiliate.phone, affiliate.email, now]
+      [
+        withdrawalId, affiliate.id, ctvCode, amount,
+        bank_name, bank_account, affiliate.full_name,
+        affiliate.phone, affiliate.email, now
+      ]
     );
 
     res.status(201).json({ message: 'Tạo yêu cầu rút tiền thành công.', withdrawalId });
@@ -2425,7 +2603,8 @@ app.get('/api/affiliate/withdrawals', authenticateToken, checkUserStatus, async 
 });
 
 // Admin: Get all withdrawal requests
-app.get('/api/admin/withdrawals', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/withdrawals', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const withdrawals = await db.all(`
@@ -2442,7 +2621,8 @@ app.get('/api/admin/withdrawals', authenticateToken, checkUserStatus, requireRol
 });
 
 // Admin: Update withdrawal status
-app.put('/api/admin/withdrawals/:id/status', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.put('/api/admin/withdrawals/:id/status', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { status, admin_note } = req.body;
   
   if (!status || !['pending', 'completed', 'rejected'].includes(status)) {
@@ -2479,7 +2659,8 @@ app.get('/api/home-banner', async (req, res) => {
 });
 
 // PUT home banner (admin only)
-app.put('/api/admin/home-banner', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.put('/api/admin/home-banner', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const {
@@ -2552,7 +2733,8 @@ app.get('/api/payment-methods', async (req, res) => {
 });
 
 // Admin: Get all payment methods
-app.get('/api/admin/payment-methods', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/payment-methods', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const methods = await db.all("SELECT * FROM payment_methods ORDER BY display_order ASC");
@@ -2563,8 +2745,13 @@ app.get('/api/admin/payment-methods', authenticateToken, checkUserStatus, requir
 });
 
 // Admin: Create payment method
-app.post('/api/admin/payment-methods', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
-  const { method_key, method_name, icon, description, account_number, account_holder, bank_name, qr_code_image, phone_number, is_active, display_order } = req.body;
+app.post('/api/admin/payment-methods', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
+  const {
+    method_key, method_name, icon, description,
+    account_number, account_holder, bank_name,
+    qr_code_image, phone_number, is_active, display_order
+  } = req.body;
   
   if (!method_key || !method_name) {
     return res.status(400).json({ message: 'Mã phương thức và tên là bắt buộc.' });
@@ -2578,7 +2765,11 @@ app.post('/api/admin/payment-methods', authenticateToken, checkUserStatus, requi
     await db.run(
       `INSERT INTO payment_methods (id, method_key, method_name, icon, description, account_number, account_holder, bank_name, qr_code_image, phone_number, is_active, display_order, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, method_key, method_name, icon || null, description || null, account_number || null, account_holder || null, bank_name || null, qr_code_image || null, phone_number || null, is_active ? 1 : 0, display_order || 0, now, now]
+      [
+        id, method_key, method_name, icon || null, description || null,
+        account_number || null, account_holder || null, bank_name || null,
+        qr_code_image || null, phone_number || null, is_active ? 1 : 0, display_order || 0, now, now
+      ]
     );
     
     const newMethod = await db.get("SELECT * FROM payment_methods WHERE id = ?", [id]);
@@ -2592,9 +2783,14 @@ app.post('/api/admin/payment-methods', authenticateToken, checkUserStatus, requi
 });
 
 // Admin: Update payment method
-app.put('/api/admin/payment-methods/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.put('/api/admin/payment-methods/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { id } = req.params;
-  const { method_key, method_name, icon, description, account_number, account_holder, bank_name, qr_code_image, phone_number, is_active, display_order } = req.body;
+  const {
+    method_key, method_name, icon, description,
+    account_number, account_holder, bank_name,
+    qr_code_image, phone_number, is_active, display_order
+  } = req.body;
   
   try {
     const db = await getDatabase();
@@ -2637,7 +2833,8 @@ app.put('/api/admin/payment-methods/:id', authenticateToken, checkUserStatus, re
 
 
 // Admin: Delete payment method
-app.delete('/api/admin/payment-methods/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.delete('/api/admin/payment-methods/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { id } = req.params;
   try {
     const db = await getDatabase();
@@ -2665,7 +2862,8 @@ app.get('/api/affiliate/guides', authenticateToken, async (req, res) => {
 });
 
 // Admin: Get all guides
-app.get('/api/admin/affiliate-guides', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/affiliate-guides', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const guides = await db.all("SELECT * FROM affiliate_guides ORDER BY display_order ASC");
@@ -2676,7 +2874,8 @@ app.get('/api/admin/affiliate-guides', authenticateToken, checkUserStatus, requi
 });
 
 // Admin: Create guide
-app.post('/api/admin/affiliate-guides', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.post('/api/admin/affiliate-guides', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { title, content, display_order } = req.body;
   if (!title || !content) {
     return res.status(400).json({ message: 'Tiêu đề và nội dung là bắt buộc.' });
@@ -2696,7 +2895,8 @@ app.post('/api/admin/affiliate-guides', authenticateToken, checkUserStatus, requ
 });
 
 // Admin: Update guide
-app.put('/api/admin/affiliate-guides/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.put('/api/admin/affiliate-guides/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { title, content, display_order } = req.body;
   if (!title || !content) {
     return res.status(400).json({ message: 'Tiêu đề và nội dung là bắt buộc.' });
@@ -2715,7 +2915,8 @@ app.put('/api/admin/affiliate-guides/:id', authenticateToken, checkUserStatus, r
 });
 
 // Admin: Delete guide
-app.delete('/api/admin/affiliate-guides/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.delete('/api/admin/affiliate-guides/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     await db.run("DELETE FROM affiliate_guides WHERE id = ?", [req.params.id]);
@@ -2747,7 +2948,8 @@ app.get('/api/site-settings', async (req, res) => {
 });
 
 // Admin: Get site settings
-app.get('/api/admin/site-settings', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/site-settings', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const settings = await db.get("SELECT * FROM site_settings WHERE id = 'settings-main'");
@@ -2766,7 +2968,8 @@ app.get('/api/admin/site-settings', authenticateToken, checkUserStatus, requireR
 });
 
 // Admin: Update site settings
-app.put('/api/admin/site-settings', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.put('/api/admin/site-settings', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { site_name, site_tagline, logo_url, favicon_url, primary_color, secondary_color } = req.body;
   
   if (!site_name || !site_name.trim()) {
@@ -2822,7 +3025,8 @@ app.get('/api/admin/email-config', authenticateToken, checkUserStatus, requireRo
     const config = await db.get("SELECT * FROM email_config WHERE id = 'main'");
     // Don't send password in response for security
     if (config) {
-      const { password, ...safeConfig } = config;
+      const safeConfig = { ...config };
+      delete safeConfig.password;
       res.json(safeConfig);
     } else {
       res.json({
@@ -2887,7 +3091,8 @@ app.get('/api/affiliate/settings/terms', async (req, res) => {
 });
 
 // Admin: Get affiliate terms
-app.get('/api/admin/affiliate/settings/terms', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/affiliate/settings/terms', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const setting = await db.get("SELECT value FROM affiliate_settings WHERE key = 'terms_content'");
@@ -2898,7 +3103,8 @@ app.get('/api/admin/affiliate/settings/terms', authenticateToken, checkUserStatu
 });
 
 // Admin: Update affiliate terms
-app.put('/api/admin/affiliate/settings/terms', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.put('/api/admin/affiliate/settings/terms', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { terms } = req.body;
   if (terms === undefined) {
     return res.status(400).json({ message: 'Nội dung điều khoản là bắt buộc.' });
