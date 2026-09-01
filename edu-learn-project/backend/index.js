@@ -20,6 +20,12 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 
+// Swagger / OpenAPI Documentation UI
+const swaggerUi = require('swagger-ui-express');
+const openapiSpec = require('./openapi.json');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
+app.get('/api/docs/openapi.json', (_req, res) => res.json(openapiSpec));
+
 // Serve uploaded files as static assets
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
@@ -520,17 +526,46 @@ app.delete('/api/admin/combos/:id', authenticateToken, checkUserStatus, requireR
 // ================= CHECKOUT / ORDERS =================
 app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => {
   const { items, payment_method, total, ref, coupon_code, payment_qr_content } = req.body;
-  if (!items || items.length === 0) {
+  if (!items || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ message: 'Giỏ hàng trống.' });
   }
 
   try {
     const db = await getDatabase();
 
-    // 1. Tính tổng tiền thực tế từ các sản phẩm
+    // 1. Tính tổng tiền thực tế độc lập từ CSDL (Chống sửa giá từ client)
     let calculatedSubtotal = 0;
+    const validatedItems = [];
     for (const item of items) {
-      calculatedSubtotal += (Number(item.price) || 0);
+      if (!item.course_id) continue;
+      let productPrice = 0;
+      let productName = item.product_name || '';
+
+      const course = await db.get("SELECT id, title, price, sale_price FROM courses WHERE id = ?", [item.course_id]);
+      if (course) {
+        const hasSale = course.sale_price !== null && course.sale_price !== undefined;
+        productPrice = hasSale ? course.sale_price : course.price;
+        productName = course.title;
+      } else {
+        const combo = await db.get("SELECT id, title, price, sale_price FROM combos WHERE id = ?", [item.course_id]);
+        if (combo) {
+          const hasComboSale = combo.sale_price !== null && combo.sale_price !== undefined;
+          productPrice = hasComboSale ? combo.sale_price : combo.price;
+          productName = combo.title;
+        } else {
+          productPrice = Math.max(0, Number(item.price) || 0);
+        }
+      }
+      calculatedSubtotal += productPrice;
+      validatedItems.push({
+        course_id: item.course_id,
+        price: productPrice,
+        product_name: productName
+      });
+    }
+
+    if (validatedItems.length === 0) {
+      return res.status(400).json({ message: 'Không tìm thấy sản phẩm hợp lệ trong giỏ hàng.' });
     }
 
     // 2. Xác thực coupon phía server nếu có áp mã
@@ -593,18 +628,31 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
     const paymentQrContent = payment_qr_content || orderId;
 
     await db.run(
-      "INSERT INTO orders (id, user_id, total, payment_method, status, created_at, payment_qr_content, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [orderId, req.user.id, finalTotal, payment_method, 'pending', now, paymentQrContent, 'chua_thanh_toan']
+      `INSERT INTO orders (id, user_id, total, subtotal, coupon_code, discount_amount, payment_method, status, created_at, payment_qr_content, payment_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        orderId,
+        req.user.id,
+        finalTotal,
+        calculatedSubtotal,
+        couponRecord ? couponRecord.code : null,
+        serverDiscount,
+        payment_method,
+        'pending',
+        now,
+        paymentQrContent,
+        'chua_thanh_toan'
+      ]
     );
 
     if (couponRecord) {
       await db.run(
-        "UPDATE coupons SET used_count = used_count + 1 WHERE id = ?",
+        "UPDATE coupons SET used_count = used_count + 1 WHERE id = ? AND used_count < quantity",
         [couponRecord.id]
       );
     }
 
-    for (const item of items) {
+    for (const item of validatedItems) {
       await db.run(
         "INSERT INTO order_details (order_id, course_id, price, product_name) VALUES (?, ?, ?, ?)",
         [orderId, item.course_id, item.price, item.product_name || item.course_id]
@@ -1449,41 +1497,55 @@ app.put('/api/admin/orders/:id/status', authenticateToken, checkUserStatus, requ
 
   try {
     const db = await getDatabase();
-    const result = await db.run('UPDATE orders SET status = ? WHERE id = ?', [status, req.params.id]);
-    if (result.changes === 0) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
+    const order = await db.get("SELECT * FROM orders WHERE id = ?", [req.params.id]);
+    if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
 
-    // Update corresponding affiliate_revenues status
-    let revStatus = 'pending';
-    if (status === 'completed') {
-      revStatus = 'approved';
-      // Create affiliate notifications for commission approval
-      const revenues = await db.all("SELECT * FROM affiliate_revenues WHERE order_id = ?", [req.params.id]);
-      for (const rev of revenues) {
-        const notifId = `notif-approved-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-        await db.run(
-          "INSERT INTO affiliate_notifications (id, affiliate_id, order_id, course_id, buyer_name, amount, commission, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          [
-            notifId, rev.affiliate_id, rev.order_id, rev.course_id,
-            rev.buyer_name, rev.order_total, rev.commission_amount, new Date().toISOString()
-          ]
-        );
-      }
-    } else if (status === 'cancelled') {
-      revStatus = 'cancelled';
-    }
-    
+    const newPaymentStatus = status === 'completed' ? 'da_thanh_toan' : 'chua_thanh_toan';
+
+    // Atomic update of both status and payment_status
     await db.run(
-      "UPDATE affiliate_revenues SET status = ? WHERE order_id = ?",
-      [revStatus, req.params.id]
+      'UPDATE orders SET status = ?, payment_status = ? WHERE id = ?',
+      [status, newPaymentStatus, req.params.id]
     );
 
-    res.json({ message: 'Đã cập nhật trạng thái đơn hàng.', status });
+    // Update corresponding affiliate_revenues status and notifications (Idempotent)
+    if (status === 'completed' && order.status !== 'completed') {
+      await db.run("UPDATE affiliate_revenues SET status = 'approved' WHERE order_id = ?", [req.params.id]);
+      
+      const revenues = await db.all("SELECT * FROM affiliate_revenues WHERE order_id = ?", [req.params.id]);
+      for (const rev of revenues) {
+        // Only insert notification if not already existing for this order approval
+        const existingNotif = await db.get(
+          "SELECT id FROM affiliate_notifications WHERE affiliate_id = ? AND order_id = ? AND course_id = ?",
+          [rev.affiliate_id, rev.order_id, rev.course_id]
+        );
+        if (!existingNotif) {
+          const notifId = `notif-approved-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+          await db.run(
+            `INSERT INTO affiliate_notifications (id, affiliate_id, order_id, course_id, buyer_name, amount, commission, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              notifId, rev.affiliate_id, rev.order_id, rev.course_id,
+              rev.buyer_name, rev.order_total, rev.commission_amount, new Date().toISOString()
+            ]
+          );
+        }
+      }
+    } else if (status === 'cancelled') {
+      await db.run("UPDATE affiliate_revenues SET status = 'cancelled' WHERE order_id = ?", [req.params.id]);
+    }
+
+    res.json({
+      message: 'Đã cập nhật trạng thái đơn hàng.',
+      status,
+      payment_status: newPaymentStatus
+    });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server.', error: error.message });
   }
 });
 
-// Update payment status
+// Update payment status (Atomically synchronized with order status)
 app.patch('/api/admin/orders/:id/payment-status', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
   const { payment_status } = req.body;
   if (!['chua_thanh_toan', 'da_thanh_toan'].includes(payment_status)) {
@@ -1492,10 +1554,44 @@ app.patch('/api/admin/orders/:id/payment-status', authenticateToken, checkUserSt
 
   try {
     const db = await getDatabase();
-    const result = await db.run('UPDATE orders SET payment_status = ? WHERE id = ?', [payment_status, req.params.id]);
-    if (result.changes === 0) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
+    const order = await db.get("SELECT * FROM orders WHERE id = ?", [req.params.id]);
+    if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
 
-    res.json({ message: 'Đã cập nhật trạng thái thanh toán.', payment_status });
+    const newOrderStatus = payment_status === 'da_thanh_toan' ? 'completed' : 'pending';
+
+    // Synchronize both payment_status and status atomically
+    await db.run(
+      'UPDATE orders SET payment_status = ?, status = ? WHERE id = ?',
+      [payment_status, newOrderStatus, req.params.id]
+    );
+
+    if (payment_status === 'da_thanh_toan' && order.status !== 'completed') {
+      await db.run("UPDATE affiliate_revenues SET status = 'approved' WHERE order_id = ?", [req.params.id]);
+      const revenues = await db.all("SELECT * FROM affiliate_revenues WHERE order_id = ?", [req.params.id]);
+      for (const rev of revenues) {
+        const existingNotif = await db.get(
+          "SELECT id FROM affiliate_notifications WHERE affiliate_id = ? AND order_id = ? AND course_id = ?",
+          [rev.affiliate_id, rev.order_id, rev.course_id]
+        );
+        if (!existingNotif) {
+          const notifId = `notif-approved-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+          await db.run(
+            `INSERT INTO affiliate_notifications (id, affiliate_id, order_id, course_id, buyer_name, amount, commission, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              notifId, rev.affiliate_id, rev.order_id, rev.course_id,
+              rev.buyer_name, rev.order_total, rev.commission_amount, new Date().toISOString()
+            ]
+          );
+        }
+      }
+    }
+
+    res.json({
+      message: 'Đã cập nhật trạng thái thanh toán.',
+      payment_status,
+      status: newOrderStatus
+    });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server.', error: error.message });
   }

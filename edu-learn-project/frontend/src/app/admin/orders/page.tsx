@@ -69,8 +69,12 @@ export default function AdminOrders() {
 
   const updateStatus = async (id: string, status: 'completed' | 'cancelled') => {
     try {
-      await api.updateAdminOrderStatus(id, status);
-      setOrders(prev => prev.map(order => order.id === id ? { ...order, status } : order));
+      const res = await api.updateAdminOrderStatus(id, status);
+      setOrders(prev => prev.map(order => order.id === id ? { 
+        ...order, 
+        status, 
+        payment_status: res?.payment_status || (status === 'completed' ? 'da_thanh_toan' : 'chua_thanh_toan')
+      } : order));
     } catch (error) {
       console.error('Không thể cập nhật đơn hàng:', error);
       alert('Không thể cập nhật trạng thái đơn hàng.');
@@ -82,11 +86,13 @@ export default function AdminOrders() {
       return;
     }
     try {
-      // Update payment status
-      await api.updatePaymentStatus(id, 'da_thanh_toan');
-      // Also update order status to completed
-      await api.updateAdminOrderStatus(id, 'completed');
-      setOrders(prev => prev.map(order => order.id === id ? { ...order, payment_status: 'da_thanh_toan', status: 'completed' } : order));
+      // Single atomic API call to approve both payment and completion
+      const res = await api.updateAdminOrderStatus(id, 'completed');
+      setOrders(prev => prev.map(order => order.id === id ? { 
+        ...order, 
+        payment_status: res?.payment_status || 'da_thanh_toan', 
+        status: 'completed' 
+      } : order));
       alert('Đã duyệt thanh toán và cập nhật đơn hàng thành công!');
     } catch (error) {
       console.error('Không thể duyệt thanh toán:', error);
@@ -99,8 +105,12 @@ export default function AdminOrders() {
       return;
     }
     try {
-      await api.updateAdminOrderStatus(id, 'cancelled');
-      setOrders(prev => prev.map(order => order.id === id ? { ...order, status: 'cancelled' } : order));
+      const res = await api.updateAdminOrderStatus(id, 'cancelled');
+      setOrders(prev => prev.map(order => order.id === id ? { 
+        ...order, 
+        status: 'cancelled',
+        payment_status: res?.payment_status || 'chua_thanh_toan'
+      } : order));
       alert('Đã hủy đơn hàng thành công!');
     } catch (error) {
       console.error('Không thể hủy đơn hàng:', error);

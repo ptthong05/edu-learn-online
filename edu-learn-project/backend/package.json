@@ -23,7 +23,8 @@
     "multer": "^2.2.0",
     "nodemailer": "^9.0.3",
     "sqlite": "^5.1.1",
-    "sqlite3": "^6.0.1"
+    "sqlite3": "^6.0.1",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "eslint": "^8.57.1",
