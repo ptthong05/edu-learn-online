@@ -18,7 +18,7 @@ Biểu mẫu đăng ký yêu cầu người dùng điền đầy đủ và chín
 | **Họ và tên** | ✅ | Không được để trống | Ví dụ: `Nguyễn Văn A` |
 | **Email** | ✅ | Định dạng email hợp lệ (`user@domain.com`), chưa được đăng ký trong hệ thống | Ví dụ: `nguyenvana@gmail.com` |
 | **Số điện thoại** | ✅ | Gồm đúng **10 chữ số**, bắt đầu bằng các đầu số hợp lệ của Việt Nam: `03`, `05`, `07`, `08`, `09` | Ví dụ: `0912345678` |
-| **Mật khẩu** | ✅ | Tối thiểu **8 ký tự**, bắt buộc chứa đủ **4 nhóm ký tự**:<br>1. Ít nhất một chữ hoa (`A-Z`)<br>2. Ít nhất một chữ thường (`a-z`)<br>3. Ít nhất một chữ số (`0-9`)<br>4. Ít nhất một ký tự đặc biệt (`!@#$%^&*...`) | Ví dụ: `Admin@123` |
+| **Mật khẩu** | ✅ | Tối thiểu **6 ký tự** | Ví dụ: `matkhau123` |
 | **Xác nhận mật khẩu** | ✅ | Phải trùng khớp 100% với giá trị đã nhập ở ô Mật khẩu | Phải giống chính xác mật khẩu |
 
 ![Giao diện Đăng ký tài khoản](../../images/01-dang-ky.png)
@@ -59,7 +59,7 @@ Biểu mẫu đăng ký yêu cầu người dùng điền đầy đủ và chín
 2. Nhập địa chỉ **Email** đã đăng ký tài khoản và nhấn nút **Gửi yêu cầu đặt lại mật khẩu**.
 3. Hệ thống gửi đường dẫn khôi phục mật khẩu (chứa Token đặt lại bảo mật) tới hòm thư email của bạn.
 4. Mở email, nhấn vào liên kết xác nhận để chuyển đến trang Đặt lại mật khẩu (`/reset-password?token=...`).
-5. Nhập mật khẩu mới đáp ứng đủ tiêu chuẩn an toàn (tối thiểu 8 ký tự, có chữ hoa, thường, số, ký tự đặc biệt) và xác nhận.
+5. Nhập mật khẩu mới đáp ứng đủ tiêu chuẩn an toàn (tối thiểu **6 ký tự**) và xác nhận.
 6. Đăng nhập lại bằng mật khẩu mới vừa thiết lập.
 
 ---
