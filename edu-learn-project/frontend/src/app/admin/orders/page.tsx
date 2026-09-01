@@ -77,20 +77,6 @@ export default function AdminOrders() {
     }
   };
 
-  const updatePaymentStatus = async (id: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'da_thanh_toan' ? 'chua_thanh_toan' : 'da_thanh_toan';
-    if (!confirm(`Xác nhận thay đổi trạng thái thanh toán thành "${newStatus === 'da_thanh_toan' ? 'Đã thanh toán' : 'Chưa thanh toán'}"?`)) {
-      return;
-    }
-    try {
-      await api.updatePaymentStatus(id, newStatus);
-      setOrders(prev => prev.map(order => order.id === id ? { ...order, payment_status: newStatus } : order));
-    } catch (error) {
-      console.error('Không thể cập nhật trạng thái thanh toán:', error);
-      alert('Không thể cập nhật trạng thái thanh toán.');
-    }
-  };
-
   const quickApprovePayment = async (id: string) => {
     if (!confirm('Xác nhận duyệt nhanh thanh toán này? Đơn hàng sẽ được chuyển sang trạng thái "Đã thanh toán" và "Đã xong".')) {
       return;

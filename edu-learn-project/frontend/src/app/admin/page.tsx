@@ -4,7 +4,6 @@ import { api } from '@/lib/utils/api';
 import { formatPrice } from '@/lib/utils/helpers';
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<any>(null);
   const [monthlyStats, setMonthlyStats] = useState<any>(null);
   const [cumulativeStats, setCumulativeStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -15,31 +14,19 @@ export default function AdminDashboard() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    api.getAdminStats()
-      .then(res => setStats(res))
+    Promise.all([
+      api.getAdminMonthlyStats(selectedMonth),
+      api.getAdminMonthlyCumulativeStats(selectedMonth)
+    ])
+      .then(([monthly, cumulative]) => {
+        setMonthlyStats(monthly);
+        setCumulativeStats(cumulative);
+      })
       .catch(err => {
         console.error('Error fetching stats:', err);
         setError(err.message || 'Không thể tải số liệu thống kê');
       })
       .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    api.getAdminMonthlyStats(selectedMonth)
-      .then(res => setMonthlyStats(res))
-      .catch(err => {
-        console.error('Error fetching monthly stats:', err);
-        setError(err.message || 'Không thể tải thống kê theo tháng');
-      });
-  }, [selectedMonth]);
-
-  useEffect(() => {
-    api.getAdminMonthlyCumulativeStats(selectedMonth)
-      .then(res => setCumulativeStats(res))
-      .catch(err => {
-        console.error('Error fetching cumulative stats:', err);
-        setError(err.message || 'Không thể tải thống kê tích lũy');
-      });
   }, [selectedMonth]);
 
   const getCurrentMonthLabel = () => {

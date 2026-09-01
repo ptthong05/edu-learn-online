@@ -1,16 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
 import { api } from '@/lib/utils/api';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { cleanPassword } from '@/lib/utils/helpers';
 
 export default function LoginPage() {
   const { login: saveAuth } = useAuth();
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
