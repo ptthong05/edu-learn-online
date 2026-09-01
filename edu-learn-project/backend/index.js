@@ -1,3 +1,6 @@
+'use strict';
+
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -715,7 +718,7 @@ app.put('/api/admin/website-content/:section', authenticateToken, checkUserStatu
     if (!['faqs', 'terms', 'guides', 'introductions', 'contacts'].includes(section)) return res.status(404).json({ message: 'Nhóm nội dung không hợp lệ.' });
     await db.exec('COMMIT');
     res.json({ message: 'Đã lưu nội dung website.' });
-  } catch (error) { try { const db = await getDatabase(); await db.exec('ROLLBACK'); } catch (_) {} res.status(500).json({ message: 'Không thể lưu nội dung.', error: error.message }); }
+  } catch (error) { try { const db = await getDatabase(); await db.exec('ROLLBACK'); } catch (_) { /* Ignore rollback error. */ } res.status(500).json({ message: 'Không thể lưu nội dung.', error: error.message }); }
 });
 
 // ================= BLOGS =================
