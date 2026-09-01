@@ -11,7 +11,6 @@ import { Eye, EyeOff, LockKeyhole, UserRound } from 'lucide-react';
 import { UserOrder } from '@/lib/data/userOrders';
 import { formatPrice } from '@/lib/utils/helpers';
 import toast from 'react-hot-toast';
-import { coupons as mockCoupons } from '@/lib/data/mockData';
 import { Coupon } from '@/types';
 
 // Sidebar nav items
@@ -171,7 +170,6 @@ function AccountPageContent() {
   const totalWithdrawn = withdrawals.filter((w: any) => w.status === 'completed').reduce((sum: number, w: any) => sum + w.amount, 0);
   const totalPendingWithdrawn = withdrawals.filter((w: any) => w.status === 'pending').reduce((sum: number, w: any) => sum + w.amount, 0);
   const balance = Math.max(0, totalCommission - totalWithdrawn - totalPendingWithdrawn);
-  const pendingCommission = allRevenues.filter((r: any) => r.status === 'pending').reduce((sum: number, r: any) => sum + r.commission_amount, 0);
   const totalRevenue = approvedRevenues.reduce((sum: number, r: any) => sum + (r.order_total || 0), 0);
   // Commission earned in the current calendar month (approved only) — resets to 0 next month
   const now = new Date();
@@ -183,7 +181,6 @@ function AccountPageContent() {
     .reduce((sum: number, r: any) => sum + r.commission_amount, 0);
 
   const totalClicks = reportData?.clicks?.length || 0;
-  const convRate = totalClicks > 0 ? Math.round((approvedRevenues.length / totalClicks) * 100) : 0;
   
   const thisMonthClicks = (reportData?.clicks || []).filter((c: any) => {
     const d = new Date(c.created_at);
