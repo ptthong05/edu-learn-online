@@ -30,4 +30,5 @@ coverage/
 !package.json
 !package-lock.json
 !tsconfig.json
+!.eslintrc.json
 !EduLearnOnline.postman_collection.json

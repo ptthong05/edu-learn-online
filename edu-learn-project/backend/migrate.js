@@ -1,3 +1,5 @@
+'use strict';
+
 const { getDatabase } = require('./db.js');
 
 async function migrate() {

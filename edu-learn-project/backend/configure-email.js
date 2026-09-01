@@ -1,3 +1,5 @@
+'use strict';
+
 // Interactive email configuration script
 // Run: node configure-email.js
 

@@ -1,3 +1,5 @@
+'use strict';
+
 const nodemailer = require('nodemailer');
 const { getDatabase } = require('./db');
 
@@ -76,7 +78,6 @@ async function sendOrderConfirmationEmail(orderId, userEmail, userName, orderDet
     // Get sender info from DB config (or fallback)
     // Always build fromName from dynamic siteName so it stays in sync with site settings
     const fromEmail = (config && config.email) ? config.email : 'ptthong.www@gmail.com';
-    const siteDesc = siteSettings?.site_description || 'Nền tảng học trực tuyến hàng đầu';
     const fromName = `${siteName} - Học viện trực tuyến`;
 
     // Format order items

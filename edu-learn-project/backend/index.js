@@ -1,3 +1,5 @@
+'use strict';
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -234,7 +236,14 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, full_name: user.full_name, email: user.email, role: user.role, must_change_password: user.must_change_password, status: user.status },
+      {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+        must_change_password: user.must_change_password,
+        status: user.status
+      },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -713,7 +722,7 @@ app.put('/api/admin/website-content/:section', authenticateToken, checkUserStatu
     if (!['faqs', 'terms', 'guides', 'introductions', 'contacts'].includes(section)) return res.status(404).json({ message: 'Nhóm nội dung không hợp lệ.' });
     await db.exec('COMMIT');
     res.json({ message: 'Đã lưu nội dung website.' });
-  } catch (error) { try { const db = await getDatabase(); await db.exec('ROLLBACK'); } catch (_) {} res.status(500).json({ message: 'Không thể lưu nội dung.', error: error.message }); }
+  } catch (error) { try { const db = await getDatabase(); await db.exec('ROLLBACK'); } catch (_err) { /* ignore rollback error */ } res.status(500).json({ message: 'Không thể lưu nội dung.', error: error.message }); }
 });
 
 // ================= BLOGS =================
@@ -875,7 +884,10 @@ app.get('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole(['
 });
 
 app.post('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
-  const { code, discount, quantity, expired_date, status, usable_by, description, discount_type, max_discount, min_order_amount } = req.body;
+  const {
+    code, discount, quantity, expired_date, status, usable_by,
+    description, discount_type, max_discount, min_order_amount
+  } = req.body;
   if (!code || discount === undefined || quantity === undefined || !expired_date) {
     return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ thông tin mã giảm giá.' });
   }
@@ -891,7 +903,10 @@ app.post('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole([
     await db.run(
       `INSERT INTO coupons (id, code, discount, quantity, used_count, expired_date, status, usable_by, description, discount_type, max_discount, min_order_amount)
        VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, code.toUpperCase(), discount, quantity, expired_date, cStatus, cUsable, description || null, cType, cMaxDiscount, cMinOrderAmount]
+      [
+        id, code.toUpperCase(), discount, quantity, expired_date,
+        cStatus, cUsable, description || null, cType, cMaxDiscount, cMinOrderAmount
+      ]
     );
     const newCoupon = await db.get("SELECT * FROM coupons WHERE id = ?", [id]);
     res.status(201).json({ message: 'Tạo mã giảm giá thành công.', coupon: newCoupon });
@@ -905,7 +920,10 @@ app.post('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole([
 
 app.put('/api/admin/coupons/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
   const { id } = req.params;
-  const { code, discount, quantity, expired_date, status, usable_by, description, discount_type, max_discount, min_order_amount } = req.body;
+  const {
+    code, discount, quantity, expired_date, status, usable_by,
+    description, discount_type, max_discount, min_order_amount
+  } = req.body;
   
   try {
     const db = await getDatabase();
@@ -1395,7 +1413,10 @@ app.put('/api/admin/orders/:id/status', authenticateToken, checkUserStatus, requ
         const notifId = `notif-approved-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         await db.run(
           "INSERT INTO affiliate_notifications (id, affiliate_id, order_id, course_id, buyer_name, amount, commission, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          [notifId, rev.affiliate_id, rev.order_id, rev.course_id, rev.buyer_name, rev.order_total, rev.commission_amount, new Date().toISOString()]
+          [
+            notifId, rev.affiliate_id, rev.order_id, rev.course_id,
+            rev.buyer_name, rev.order_total, rev.commission_amount, new Date().toISOString()
+          ]
         );
       }
     } else if (status === 'cancelled') {
@@ -1751,7 +1772,10 @@ app.get('/api/admin/courses', authenticateToken, checkUserStatus, requireRole(['
 });
 
 app.post('/api/admin/courses', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
-  const { title, description, price, sale_price, category_id, content_html, highlights, content, image, status, instructor } = req.body;
+  const {
+    title, description, price, sale_price, category_id,
+    content_html, highlights, content, image, status, instructor
+  } = req.body;
   if (!title || price === undefined) {
     return res.status(400).json({ message: 'Tên khóa học và giá là bắt buộc.' });
   }
@@ -1765,7 +1789,11 @@ app.post('/api/admin/courses', authenticateToken, checkUserStatus, requireRole([
     await db.run(
       `INSERT INTO courses (id, title, description, image, price, sale_price, category_id, content_html, highlights, curriculum, instructor, status, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, title, description || '', courseImage, price, sale_price || null, category_id || null, content_html || '', JSON.stringify(parseCourseHighlights(highlights)), JSON.stringify(parseCourseCurriculum(content)), courseInstructor, courseStatus, new Date().toISOString()]
+      [
+        id, title, description || '', courseImage, price, sale_price || null, category_id || null,
+        content_html || '', JSON.stringify(parseCourseHighlights(highlights)),
+        JSON.stringify(parseCourseCurriculum(content)), courseInstructor, courseStatus, new Date().toISOString()
+      ]
     );
     const newCourse = await db.get("SELECT * FROM courses WHERE id = ?", [id]);
     res.json(formatCourse(newCourse));
@@ -1775,7 +1803,10 @@ app.post('/api/admin/courses', authenticateToken, checkUserStatus, requireRole([
 });
 
 app.put('/api/admin/courses/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
-  const { title, description, price, sale_price, category_id, content_html, highlights, content, image, status, instructor } = req.body;
+  const {
+    title, description, price, sale_price, category_id,
+    content_html, highlights, content, image, status, instructor
+  } = req.body;
   if (!title || price === undefined) {
     return res.status(400).json({ message: 'Tên khóa học và giá là bắt buộc.' });
   }
@@ -2282,7 +2313,8 @@ app.get('/api/affiliate/notifications', authenticateToken, checkUserStatus, asyn
 });
 
 // Admin: Get all affiliate purchase notifications
-app.get('/api/admin/affiliate-notifications', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/affiliate-notifications', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const notifications = await db.all(`
@@ -2300,7 +2332,8 @@ app.get('/api/admin/affiliate-notifications', authenticateToken, checkUserStatus
 });
 
 // Admin: Aggregate successful commission rows from the affiliate revenue ledger by month and all time.
-app.get('/api/admin/affiliate-commission-stats', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/affiliate-commission-stats', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const month = /^\d{4}-\d{2}$/.test(req.query.month || '')
     ? req.query.month
     : new Date().toISOString().slice(0, 7);
@@ -2388,7 +2421,11 @@ app.post('/api/affiliate/withdrawals', authenticateToken, checkUserStatus, async
     await db.run(
       `INSERT INTO withdrawal_requests (id, affiliate_id, ctv_code, amount, bank_name, bank_account, account_holder, phone, email, status, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
-      [withdrawalId, affiliate.id, ctvCode, amount, bank_name, bank_account, affiliate.full_name, affiliate.phone, affiliate.email, now]
+      [
+        withdrawalId, affiliate.id, ctvCode, amount,
+        bank_name, bank_account, affiliate.full_name,
+        affiliate.phone, affiliate.email, now
+      ]
     );
 
     res.status(201).json({ message: 'Tạo yêu cầu rút tiền thành công.', withdrawalId });
@@ -2423,7 +2460,8 @@ app.get('/api/affiliate/withdrawals', authenticateToken, checkUserStatus, async 
 });
 
 // Admin: Get all withdrawal requests
-app.get('/api/admin/withdrawals', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/withdrawals', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const withdrawals = await db.all(`
@@ -2440,7 +2478,8 @@ app.get('/api/admin/withdrawals', authenticateToken, checkUserStatus, requireRol
 });
 
 // Admin: Update withdrawal status
-app.put('/api/admin/withdrawals/:id/status', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.put('/api/admin/withdrawals/:id/status', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { status, admin_note } = req.body;
   
   if (!status || !['pending', 'completed', 'rejected'].includes(status)) {
@@ -2477,7 +2516,8 @@ app.get('/api/home-banner', async (req, res) => {
 });
 
 // PUT home banner (admin only)
-app.put('/api/admin/home-banner', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.put('/api/admin/home-banner', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const {
@@ -2550,7 +2590,8 @@ app.get('/api/payment-methods', async (req, res) => {
 });
 
 // Admin: Get all payment methods
-app.get('/api/admin/payment-methods', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/payment-methods', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const methods = await db.all("SELECT * FROM payment_methods ORDER BY display_order ASC");
@@ -2561,8 +2602,13 @@ app.get('/api/admin/payment-methods', authenticateToken, checkUserStatus, requir
 });
 
 // Admin: Create payment method
-app.post('/api/admin/payment-methods', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
-  const { method_key, method_name, icon, description, account_number, account_holder, bank_name, qr_code_image, phone_number, is_active, display_order } = req.body;
+app.post('/api/admin/payment-methods', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
+  const {
+    method_key, method_name, icon, description,
+    account_number, account_holder, bank_name,
+    qr_code_image, phone_number, is_active, display_order
+  } = req.body;
   
   if (!method_key || !method_name) {
     return res.status(400).json({ message: 'Mã phương thức và tên là bắt buộc.' });
@@ -2576,7 +2622,11 @@ app.post('/api/admin/payment-methods', authenticateToken, checkUserStatus, requi
     await db.run(
       `INSERT INTO payment_methods (id, method_key, method_name, icon, description, account_number, account_holder, bank_name, qr_code_image, phone_number, is_active, display_order, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, method_key, method_name, icon || null, description || null, account_number || null, account_holder || null, bank_name || null, qr_code_image || null, phone_number || null, is_active ? 1 : 0, display_order || 0, now, now]
+      [
+        id, method_key, method_name, icon || null, description || null,
+        account_number || null, account_holder || null, bank_name || null,
+        qr_code_image || null, phone_number || null, is_active ? 1 : 0, display_order || 0, now, now
+      ]
     );
     
     const newMethod = await db.get("SELECT * FROM payment_methods WHERE id = ?", [id]);
@@ -2590,9 +2640,14 @@ app.post('/api/admin/payment-methods', authenticateToken, checkUserStatus, requi
 });
 
 // Admin: Update payment method
-app.put('/api/admin/payment-methods/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.put('/api/admin/payment-methods/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { id } = req.params;
-  const { method_key, method_name, icon, description, account_number, account_holder, bank_name, qr_code_image, phone_number, is_active, display_order } = req.body;
+  const {
+    method_key, method_name, icon, description,
+    account_number, account_holder, bank_name,
+    qr_code_image, phone_number, is_active, display_order
+  } = req.body;
   
   try {
     const db = await getDatabase();
@@ -2635,7 +2690,8 @@ app.put('/api/admin/payment-methods/:id', authenticateToken, checkUserStatus, re
 
 
 // Admin: Delete payment method
-app.delete('/api/admin/payment-methods/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.delete('/api/admin/payment-methods/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { id } = req.params;
   try {
     const db = await getDatabase();
@@ -2663,7 +2719,8 @@ app.get('/api/affiliate/guides', authenticateToken, async (req, res) => {
 });
 
 // Admin: Get all guides
-app.get('/api/admin/affiliate-guides', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/affiliate-guides', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const guides = await db.all("SELECT * FROM affiliate_guides ORDER BY display_order ASC");
@@ -2674,7 +2731,8 @@ app.get('/api/admin/affiliate-guides', authenticateToken, checkUserStatus, requi
 });
 
 // Admin: Create guide
-app.post('/api/admin/affiliate-guides', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.post('/api/admin/affiliate-guides', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { title, content, display_order } = req.body;
   if (!title || !content) {
     return res.status(400).json({ message: 'Tiêu đề và nội dung là bắt buộc.' });
@@ -2694,7 +2752,8 @@ app.post('/api/admin/affiliate-guides', authenticateToken, checkUserStatus, requ
 });
 
 // Admin: Update guide
-app.put('/api/admin/affiliate-guides/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.put('/api/admin/affiliate-guides/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { title, content, display_order } = req.body;
   if (!title || !content) {
     return res.status(400).json({ message: 'Tiêu đề và nội dung là bắt buộc.' });
@@ -2713,7 +2772,8 @@ app.put('/api/admin/affiliate-guides/:id', authenticateToken, checkUserStatus, r
 });
 
 // Admin: Delete guide
-app.delete('/api/admin/affiliate-guides/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.delete('/api/admin/affiliate-guides/:id', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     await db.run("DELETE FROM affiliate_guides WHERE id = ?", [req.params.id]);
@@ -2745,7 +2805,8 @@ app.get('/api/site-settings', async (req, res) => {
 });
 
 // Admin: Get site settings
-app.get('/api/admin/site-settings', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/site-settings', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const settings = await db.get("SELECT * FROM site_settings WHERE id = 'settings-main'");
@@ -2764,7 +2825,8 @@ app.get('/api/admin/site-settings', authenticateToken, checkUserStatus, requireR
 });
 
 // Admin: Update site settings
-app.put('/api/admin/site-settings', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.put('/api/admin/site-settings', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { site_name, site_tagline, logo_url, favicon_url, primary_color, secondary_color } = req.body;
   
   if (!site_name || !site_name.trim()) {
@@ -2820,7 +2882,8 @@ app.get('/api/admin/email-config', authenticateToken, checkUserStatus, requireRo
     const config = await db.get("SELECT * FROM email_config WHERE id = 'main'");
     // Don't send password in response for security
     if (config) {
-      const { password, ...safeConfig } = config;
+      const safeConfig = { ...config };
+      delete safeConfig.password;
       res.json(safeConfig);
     } else {
       res.json({
@@ -2885,7 +2948,8 @@ app.get('/api/affiliate/settings/terms', async (req, res) => {
 });
 
 // Admin: Get affiliate terms
-app.get('/api/admin/affiliate/settings/terms', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.get('/api/admin/affiliate/settings/terms', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   try {
     const db = await getDatabase();
     const setting = await db.get("SELECT value FROM affiliate_settings WHERE key = 'terms_content'");
@@ -2896,7 +2960,8 @@ app.get('/api/admin/affiliate/settings/terms', authenticateToken, checkUserStatu
 });
 
 // Admin: Update affiliate terms
-app.put('/api/admin/affiliate/settings/terms', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']), async (req, res) => {
+app.put('/api/admin/affiliate/settings/terms', authenticateToken, checkUserStatus, requireRole(['MANAGER', 'STAFF']),
+  async (req, res) => {
   const { terms } = req.body;
   if (terms === undefined) {
     return res.status(400).json({ message: 'Nội dung điều khoản là bắt buộc.' });
