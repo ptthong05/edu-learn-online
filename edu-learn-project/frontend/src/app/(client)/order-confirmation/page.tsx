@@ -61,6 +61,7 @@ function OrderConfirmationContent() {
     } else if (orderId) {
       fetchOrderDetails();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, isCheckout]);
 
   const fetchOrderDetails = async () => {

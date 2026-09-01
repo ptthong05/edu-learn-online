@@ -1,4 +1,4 @@
-﻿# Affiliate Program
+# Affiliate Program
 
 ## What is Affiliate?
 
@@ -35,11 +35,12 @@ Share it on:
 ## Requesting a Withdrawal
 
 ### Requirements
-- Minimum balance: As set by Admin
+- **Minimum Withdrawal Amount**: **50,000 VND** per request
+- Bank account must be a valid domestic bank account in Vietnam
 
 ### Steps
 1. Go to **Account → Affiliate → Request Withdrawal**
-2. Enter the withdrawal amount
+2. Enter the withdrawal amount (at least 50,000 VND and within available balance)
 3. Enter your bank account details
 4. Click **Submit Request**
 5. Wait for Admin approval (usually 1–3 business days)

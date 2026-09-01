@@ -65,12 +65,20 @@ jobs:
         working-directory: ./edu-learn-project/frontend
         run: npm run build
 
+      - name: Lint Frontend
+        working-directory: ./edu-learn-project/frontend
+        run: npm run lint
+
       # ----------------------------------------------------------
       # BACKEND
       # ----------------------------------------------------------
       - name: Install Backend Dependencies
         working-directory: ./edu-learn-project/backend
         run: npm ci
+
+      - name: Lint Backend
+        working-directory: ./edu-learn-project/backend
+        run: npm run lint
 
 
   # ============================================================

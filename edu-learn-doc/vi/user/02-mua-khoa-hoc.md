@@ -1,53 +1,90 @@
-﻿# Mua Khóa học
+# Hướng dẫn Mua Khóa học & Thanh toán
 
-## Tìm kiếm khóa học
+Tài liệu hướng dẫn chi tiết quy trình tìm kiếm, chọn mua khóa học, áp dụng mã giảm giá (Coupon), nhập mã giới thiệu CTV, thanh toán quét mã QR/Chuyển khoản và nộp minh chứng đơn hàng.
 
-### Trang danh sách khóa học (`/courses`)
-- Tìm kiếm theo **từ khóa**
-- Lọc theo **danh mục**
-- Lọc theo **mức giá** (miễn phí / trả phí)
-- Sắp xếp theo **mới nhất**, **phổ biến nhất**, **giá thấp đến cao**
+---
 
-### Trang chi tiết khóa học
-- Xem thông tin đầy đủ: mô tả, nội dung, giảng viên
-- Xem danh sách bài học (syllabus)
-- Xem đánh giá từ học viên
+## 1. Tìm kiếm và Lựa chọn Khóa học
 
-## Quy trình mua hàng
+### 1.1 Khám phá danh sách khóa học (`/courses`)
+- **Tìm kiếm thông minh**: Nhập từ khóa tên khóa học, giảng viên hoặc chủ đề tại thanh tìm kiếm.
+- **Lọc theo danh mục**: Chọn theo các chủ đề: *Lập trình Web, UI/UX Design, Data Science, Marketing, Python...*
+- **Sắp xếp linh hoạt**: Sắp xếp theo giá (thấp đến cao / cao đến thấp), khóa học mới nhất, hoặc được đánh giá cao nhất.
 
-### Bước 1: Thêm vào giỏ hàng
-- Nhấn **Thêm vào giỏ** trên trang chi tiết khóa học
-- Hoặc nhấn **Mua ngay** để chuyển thẳng tới thanh toán
+### 1.2 Xem chi tiết khóa học
+- Xem video giới thiệu (Intro video), hình ảnh thumbnail khóa học.
+- Xem danh sách giáo trình chi tiết (Curriculum) và các bài giảng.
+- Đọc các điểm nổi bật (Highlights) và đánh giá (Reviews) từ học viên thực tế.
 
-### Bước 2: Xem giỏ hàng (`/cart`)
-- Kiểm tra danh sách khóa học trong giỏ
-- Xóa khóa học không muốn mua
-- Nhập **mã giảm giá** (nếu có)
+![Giao diện Chi tiết khóa học](../../images/04-chi-tiet-khoa-hoc.png)
 
-### Bước 3: Thanh toán (`/checkout`)
-- Xác nhận thông tin đơn hàng
-- Chọn **phương thức thanh toán**
-- Thực hiện thanh toán theo hướng dẫn
-- Upload ảnh biên lai (với chuyển khoản)
+---
 
-### Bước 4: Xác nhận đơn hàng
-- Trang xác nhận hiển thị sau khi đặt hàng thành công
-- Email xác nhận đơn hàng được gửi tới hộp thư
+## 2. Quy trình Mua hàng & Thanh toán
 
-### Bước 5: Truy cập khóa học
-Sau khi Admin xác nhận thanh toán:
-- Khóa học xuất hiện trong **Khóa học của tôi**
-- Bắt đầu học ngay!
+```
++-------------------+      +-------------------+      +---------------------+      +---------------------+
+| 1. Chọn khóa học  | ---> | 2. Giỏ hàng /     | ---> | 3. Thanh toán       | ---> | 4. Nộp biên lai &   |
+| (Thêm giỏ/Mua ngay)      |    Kiểm tra Coupon|      | (Chọn PTTT, Quét QR)|      |    Chờ duyệt (PASS) |
++-------------------+      +-------------------+      +---------------------+      +---------------------+
+```
 
-## Áp dụng mã giảm giá
+### Bước 1: Thêm vào Giỏ hàng hoặc Mua ngay
+- **Thêm vào giỏ**: Nhấn nút **Thêm vào giỏ** để lưu khóa học và tiếp tục duyệt các khóa học khác.
+- **Mua ngay**: Nhấn nút **Mua ngay** để lưu đơn mua vào phiên tạm thời (`sessionStorage`) và chuyển thẳng đến trang **Thanh toán (`/checkout?buynow=true`)**.
 
-1. Vào trang **Giỏ hàng** hoặc **Thanh toán**
-2. Nhập mã vào ô **Mã giảm giá**
-3. Nhấn **Áp dụng**
-4. Giá được cập nhật tự động
+### Bước 2: Quản lý Giỏ hàng (`/cart`)
+- Kiểm tra danh sách các khóa học đã chọn mua.
+- Xóa bớt các khóa học không có nhu cầu.
+- Xem tổng tiền tạm tính và nhấn nút **Tiến hành thanh toán**.
 
-## Combo khóa học
+### Bước 3: Hoàn tất đơn hàng tại trang Thanh toán (`/checkout`)
 
-Truy cập `/combos` để xem các gói combo tiết kiệm:
-- Nhiều khóa học gộp lại với giá thấp hơn mua lẻ
-- Áp dụng quy trình mua tương tự khóa học đơn lẻ
+Tại trang thanh toán, hệ thống cung cấp giao diện tích hợp trực quan:
+
+![Giao diện Giỏ hàng & Thanh toán](../../images/05-gio-hang-thanh-toan.png)
+
+#### Các tính năng tại trang Thanh toán:
+1. **Phương thức thanh toán**:
+   * **QR Code Ngân hàng**: Tự động sinh mã VietQR với số tiền đã trừ khuyến mãi và nội dung chuyển khoản là mã đơn hàng duy nhất.
+   * **Chuyển khoản Internet Banking**: Hiển thị số tài khoản, tên chủ tài khoản và ngân hàng nhận.
+   * **Ví MoMo**: Hiển thị số điện thoại nhận tiền MoMo.
+2. **Mã giảm giá (Coupon/Voucher)**:
+   * Nhập mã voucher khuyến mãi (ví dụ `SALE30`) và nhấn **Áp dụng**.
+   * Hệ thống tự động tính toán số tiền giảm trừ vào tổng đơn hàng theo điều kiện của mã.
+3. **Mã giới thiệu Cộng tác viên (Affiliate / CTV Code)**:
+   * Nếu bạn truy cập qua link giới thiệu CTV, hệ thống sẽ tự động điền mã giới thiệu.
+   * Người mua cũng có thể tự nhập mã CTV thủ công để ủng hộ người giới thiệu.
+
+### Bước 4: Đặt hàng & Nộp bằng chứng thanh toán
+1. Nhấn nút **Đặt hàng ngay**. Hệ thống sẽ tạo đơn hàng với mã định danh (ví dụ `ORD-1725000000` hoặc `CTV-1725000000`).
+2. Thực hiện chuyển khoản qua app ngân hàng hoặc quét mã QR hiển thị trên màn hình.
+3. **Tải lên ảnh chụp biên lai giao dịch thành công (Payment Proof)**:
+   * Nhấn nút **Chọn ảnh biên lai** và tải lên ảnh chụp màn hình xác nhận chuyển khoản.
+   * Nhấn **Xác nhận nộp biên lai**.
+
+```
++-------------------------------------------------------------+
+|               NỘP MINH CHỨNG THANH TOÁN                     |
+|                                                             |
+|   Mã đơn hàng: ORD-20260831-99                              |
+|   Số tiền cần chuyển: 553.000 đ                             |
+|                                                             |
+|   [ Chọn tệp ảnh biên lai chuyển khoản (JPG/PNG/WEBP) ]     |
+|   [                  NỘP MINH CHỨNG                   ]     |
+|                                                             |
+|   ℹ️ Ban quản trị sẽ đối soát và kích hoạt trong 5-15 phút. |
++-------------------------------------------------------------+
+```
+
+### Bước 5: Kích hoạt khóa học
+- Đơn hàng sau khi đặt thành công sẽ ở trạng thái **Chờ duyệt (`pending`)** và trạng thái thanh toán **Chưa thanh toán (`chua_thanh_toan`)**.
+- Quản trị viên (Admin/Staff) sẽ đối soát biên lai và duyệt đơn sang trạng thái **Đã xong (`completed`)** và **Đã thanh toán (`da_thanh_toan`)**.
+- Ngay sau khi được duyệt, khóa học sẽ xuất hiện ngay trong mục **Khóa học của tôi (`/my-courses`)** để bạn bắt đầu học tập không giới hạn.
+
+---
+
+## 3. Mua Gói Combo Khóa học (`/combos`)
+
+- Truy cập trang **Combo (`/combos`)** để lựa chọn các gói combo gồm nhiều khóa học kết hợp với mức giá ưu đãi đặc biệt.
+- Quy trình thanh toán, áp dụng coupon và nộp minh chứng của combo hoàn toàn tương tự như khóa học đơn lẻ.

@@ -56,8 +56,10 @@ app.get('/api/health', (_req, res) => {
 const JWT_SECRET = process.env.JWT_SECRET || 'edulearn_super_secret_key_123!@#';
 
 function parseCourseHighlights(value) {
-  if (Array.isArray(value)) return value.filter(item => typeof item === 'string' && item.trim());
-  if (typeof value !== 'string') return [];
+  if (Array.isArray(value)) 
+    return value.filter(item => typeof item === 'string' && item.trim());
+  if (typeof value !== 'string') 
+    return [];
   try {
     const parsed = JSON.parse(value);
     return Array.isArray(parsed) ? parsed.filter(item => typeof item === 'string' && item.trim()) : [];

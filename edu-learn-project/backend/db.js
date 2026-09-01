@@ -1,3 +1,5 @@
+'use strict';
+
 const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
 const path = require('path');
@@ -11,6 +13,8 @@ async function getDatabase() {
     filename: path.join(__dirname, 'database.sqlite'),
     driver: sqlite3.Database
   });
+  // Bật kiểm tra ràng buộc Foreign Key cho SQLite
+  await db.run('PRAGMA foreign_keys = ON;');
   return db;
 }
 
@@ -26,8 +30,8 @@ async function initDatabase() {
       phone TEXT,
       password TEXT NOT NULL,
       avatar TEXT,
-      role TEXT NOT NULL DEFAULT 'USER', -- USER, MANAGER, STAFF, AFFILIATE
-      status TEXT NOT NULL DEFAULT 'active', -- active, blocked
+      role TEXT NOT NULL DEFAULT 'USER' CHECK (role IN ('USER', 'MANAGER', 'STAFF', 'AFFILIATE')),
+      status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'blocked')),
       must_change_password INTEGER DEFAULT 0,
       created_at TEXT NOT NULL
     )
@@ -48,7 +52,7 @@ async function initDatabase() {
       expires_at TEXT NOT NULL,
       used INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users (id)
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
     )
   `);
 
@@ -60,7 +64,7 @@ async function initDatabase() {
     )
   `);
 
-  // Seed default course categories (INSERT OR IGNORE keeps existing data safe)
+  // Seed default course categories
   await database.run(`
     INSERT OR IGNORE INTO categories (id, name) VALUES
       ('cat-1', 'Lập trình Web'),
@@ -73,7 +77,7 @@ async function initDatabase() {
       ('cat-8', 'DevOps / Cloud')
   `);
 
-  // Create Course Table
+  // Create Course Table with CHECK constraints and FOREIGN KEY ON DELETE SET NULL
   await database.exec(`
     CREATE TABLE IF NOT EXISTS courses (
       id TEXT PRIMARY KEY,
@@ -81,17 +85,23 @@ async function initDatabase() {
       description TEXT,
       image TEXT,
       video_intro TEXT,
-      price INTEGER NOT NULL,
-      sale_price INTEGER,
+      price INTEGER NOT NULL CHECK (price >= 0),
+      sale_price INTEGER CHECK (sale_price IS NULL OR (sale_price >= 0 AND sale_price <= price)),
       category_id TEXT,
       instructor TEXT,
-      status TEXT DEFAULT 'published', -- published, hidden
+      status TEXT DEFAULT 'published' CHECK (status IN ('published', 'draft', 'hidden')),
       content_html TEXT DEFAULT '',
       highlights TEXT DEFAULT '[]',
       curriculum TEXT DEFAULT '[]',
       created_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (category_id) REFERENCES categories (id)
+      FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE SET NULL
     )
+  `);
+
+  // Create Indexes for Courses Table
+  await database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_courses_category_id ON courses (category_id);
+    CREATE INDEX IF NOT EXISTS idx_courses_status ON courses (status);
   `);
 
   try {
@@ -122,9 +132,9 @@ async function initDatabase() {
       title TEXT NOT NULL,
       image TEXT,
       description TEXT,
-      price INTEGER NOT NULL,
-      sale_price INTEGER,
-      status TEXT DEFAULT 'active'
+      price INTEGER NOT NULL CHECK (price >= 0),
+      sale_price INTEGER CHECK (sale_price IS NULL OR sale_price >= 0),
+      status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive'))
     )
   `);
 
@@ -145,37 +155,80 @@ async function initDatabase() {
     )
   `);
 
+  await database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_combo_details_combo_id ON combo_details (combo_id);
+    CREATE INDEX IF NOT EXISTS idx_combo_details_course_id ON combo_details (course_id);
+  `);
+
   // Create Orders Table
   await database.exec(`
     CREATE TABLE IF NOT EXISTS orders (
       id TEXT PRIMARY KEY,
       user_id TEXT,
-      total INTEGER NOT NULL,
+      total INTEGER NOT NULL CHECK (total >= 0),
+      subtotal INTEGER NOT NULL DEFAULT 0,
+      coupon_code TEXT,
+      discount_amount INTEGER DEFAULT 0,
       payment_method TEXT NOT NULL,
-      status TEXT DEFAULT 'pending', -- pending, completed, cancelled
-      payment_status TEXT DEFAULT 'chua_thanh_toan', -- chua_thanh_toan, da_thanh_toan
+      status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'cancelled')),
+      payment_status TEXT DEFAULT 'chua_thanh_toan' CHECK (payment_status IN ('chua_thanh_toan', 'da_thanh_toan')),
       payment_proof TEXT,
+      payment_qr_content TEXT,
       created_at TEXT NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users (id)
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE RESTRICT
     )
   `);
 
+  // Ensure columns exist on legacy databases before creating indexes
   try {
     await database.exec("ALTER TABLE orders ADD COLUMN payment_status TEXT DEFAULT 'chua_thanh_toan'");
   } catch (err) {
     // Column already exists, ignore error
   }
+  try {
+    await database.exec("ALTER TABLE orders ADD COLUMN subtotal INTEGER DEFAULT 0");
+  } catch (err) {
+    // Column already exists, ignore error
+  }
+  try {
+    await database.exec("ALTER TABLE orders ADD COLUMN coupon_code TEXT");
+  } catch (err) {
+    // Column already exists, ignore error
+  }
+  try {
+    await database.exec("ALTER TABLE orders ADD COLUMN discount_amount INTEGER DEFAULT 0");
+  } catch (err) {
+    // Column already exists, ignore error
+  }
 
-  // Create Order Details Table
+  // Create Indexes for Orders Table
+  await database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id);
+    CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
+    CREATE INDEX IF NOT EXISTS idx_orders_coupon_code ON orders (coupon_code);
+  `);
+
+  // Create Order Details Table (Supports course_id and combo_id with cascade delete from orders)
   await database.exec(`
     CREATE TABLE IF NOT EXISTS order_details (
       order_id TEXT,
       course_id TEXT,
-      price INTEGER NOT NULL,
+      price INTEGER NOT NULL CHECK (price >= 0),
+      product_name TEXT,
       PRIMARY KEY (order_id, course_id),
-      FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE,
-      FOREIGN KEY (course_id) REFERENCES courses (id)
+      FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
     )
+  `);
+
+  try {
+    await database.exec("ALTER TABLE order_details ADD COLUMN product_name TEXT");
+  } catch (e) {
+    // Column already exists, ignore
+  }
+
+  await database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_order_details_order_id ON order_details (order_id);
+    CREATE INDEX IF NOT EXISTS idx_order_details_course_id ON order_details (course_id);
   `);
 
   // Create Reviews Table
@@ -184,12 +237,17 @@ async function initDatabase() {
       id TEXT PRIMARY KEY,
       user_id TEXT,
       course_id TEXT,
-      rating INTEGER NOT NULL,
+      rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
       comment TEXT,
       created_at TEXT NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users (id),
-      FOREIGN KEY (course_id) REFERENCES courses (id)
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+      FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE
     )
+  `);
+
+  await database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_reviews_course_id ON reviews (course_id);
+    CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews (user_id);
   `);
 
   // Create Coupons Table
@@ -197,15 +255,15 @@ async function initDatabase() {
     CREATE TABLE IF NOT EXISTS coupons (
       id TEXT PRIMARY KEY,
       code TEXT UNIQUE NOT NULL,
-      discount INTEGER NOT NULL,
-      quantity INTEGER NOT NULL,
-      used_count INTEGER DEFAULT 0,
+      discount INTEGER NOT NULL CHECK (discount > 0),
+      quantity INTEGER NOT NULL CHECK (quantity >= 0),
+      used_count INTEGER DEFAULT 0 CHECK (used_count >= 0),
       expired_date TEXT NOT NULL,
-      status TEXT DEFAULT 'active', -- active, inactive
-      usable_by TEXT DEFAULT 'user', -- user, affiliate
+      status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+      usable_by TEXT DEFAULT 'user' CHECK (usable_by IN ('user', 'affiliate', 'all')),
       description TEXT,
-      max_discount INTEGER DEFAULT 0, -- maximum discount amount in VND (0 = no limit)
-      min_order_amount INTEGER DEFAULT 0 -- minimum order amount in VND (0 = no minimum)
+      max_discount INTEGER DEFAULT 0 CHECK (max_discount >= 0),
+      min_order_amount INTEGER DEFAULT 0 CHECK (min_order_amount >= 0)
     )
   `);
 
@@ -216,8 +274,8 @@ async function initDatabase() {
       title TEXT,
       image TEXT,
       link TEXT,
-      display_order INTEGER,
-      status TEXT DEFAULT 'active'
+      display_order INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive'))
     )
   `);
 
@@ -321,13 +379,13 @@ async function initDatabase() {
       bank_account TEXT NOT NULL,
       address TEXT NOT NULL,
       dob TEXT NOT NULL,
-      status TEXT DEFAULT 'pending',
+      status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'terminated')),
       affiliate_email TEXT,
       ctv_code TEXT,
       ma_ctv TEXT,
       affiliate_link TEXT,
       created_at TEXT NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users (id)
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
     )
   `);
 
@@ -335,8 +393,8 @@ async function initDatabase() {
   await database.exec(`
     CREATE TABLE IF NOT EXISTS affiliate_commissions (
       course_id TEXT PRIMARY KEY,
-      commission_rate REAL DEFAULT 15.0,
-      FOREIGN KEY (course_id) REFERENCES courses(id)
+      commission_rate REAL DEFAULT 15.0 CHECK (commission_rate >= 0 AND commission_rate <= 100),
+      FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
     )
   `);
 
@@ -353,8 +411,15 @@ async function initDatabase() {
       read_by_affiliate INTEGER DEFAULT 0,
       read_by_admin INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
-      FOREIGN KEY (affiliate_id) REFERENCES affiliates(id)
+      FOREIGN KEY (affiliate_id) REFERENCES affiliates(id) ON DELETE CASCADE,
+      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
     )
+  `);
+
+  await database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_affiliate_notifications_affiliate_id ON affiliate_notifications (affiliate_id);
+    CREATE INDEX IF NOT EXISTS idx_affiliate_notifications_order_id ON affiliate_notifications (order_id);
+    CREATE INDEX IF NOT EXISTS idx_affiliate_notifications_course_id ON affiliate_notifications (course_id);
   `);
 
   // Create Withdrawal Requests Table
@@ -363,18 +428,23 @@ async function initDatabase() {
       id TEXT PRIMARY KEY,
       affiliate_id TEXT NOT NULL,
       ctv_code TEXT,
-      amount INTEGER NOT NULL,
+      amount INTEGER NOT NULL CHECK (amount >= 50000),
       bank_name TEXT NOT NULL,
       bank_account TEXT NOT NULL,
       account_holder TEXT NOT NULL,
       phone TEXT NOT NULL,
       email TEXT NOT NULL,
-      status TEXT DEFAULT 'pending', -- pending, completed, rejected
+      status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'rejected')),
       admin_note TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT,
-      FOREIGN KEY (affiliate_id) REFERENCES affiliates(id)
+      FOREIGN KEY (affiliate_id) REFERENCES affiliates(id) ON DELETE CASCADE
     )
+  `);
+
+  await database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_affiliate_id ON withdrawal_requests (affiliate_id);
+    CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_status ON withdrawal_requests (status);
   `);
 
   // Create Affiliate Revenues Table
@@ -385,14 +455,20 @@ async function initDatabase() {
       order_id TEXT NOT NULL,
       course_id TEXT NOT NULL,
       buyer_name TEXT,
-      order_total INTEGER NOT NULL,
-      commission_rate REAL DEFAULT 15.0,
-      commission_amount INTEGER NOT NULL,
-      status TEXT DEFAULT 'pending', -- pending, approved, paid, cancelled
+      order_total INTEGER NOT NULL CHECK (order_total >= 0),
+      commission_rate REAL DEFAULT 15.0 CHECK (commission_rate >= 0 AND commission_rate <= 100),
+      commission_amount INTEGER NOT NULL CHECK (commission_amount >= 0),
+      status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'paid', 'cancelled')),
       created_at TEXT NOT NULL,
-      FOREIGN KEY (affiliate_id) REFERENCES affiliates(id),
-      FOREIGN KEY (order_id) REFERENCES orders(id)
+      FOREIGN KEY (affiliate_id) REFERENCES affiliates(id) ON DELETE CASCADE,
+      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
     )
+  `);
+
+  await database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_affiliate_revenues_affiliate_id ON affiliate_revenues (affiliate_id);
+    CREATE INDEX IF NOT EXISTS idx_affiliate_revenues_order_id ON affiliate_revenues (order_id);
+    CREATE INDEX IF NOT EXISTS idx_affiliate_revenues_course_id ON affiliate_revenues (course_id);
   `);
 
   // Create Affiliate Clicks Table
@@ -404,8 +480,12 @@ async function initDatabase() {
       ip TEXT,
       user_agent TEXT,
       created_at TEXT NOT NULL,
-      FOREIGN KEY (affiliate_id) REFERENCES affiliates(id)
+      FOREIGN KEY (affiliate_id) REFERENCES affiliates(id) ON DELETE CASCADE
     )
+  `);
+
+  await database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_affiliate_id ON affiliate_clicks (affiliate_id);
   `);
 
   // Run migrations for existing DBs
@@ -470,8 +550,7 @@ async function initDatabase() {
     // Column already exists, ignore error
   }
 
-  // These defaults are also added to databases that were created before the
-  // website-content feature existed.
+  // These defaults are also added to databases that were created before the website-content feature existed.
   const now = new Date().toISOString();
   await database.run(`INSERT OR IGNORE INTO contact_info (id, type, value) VALUES
     ('footer-address', 'address', 'Hồ Chí Minh, Việt Nam'),
@@ -599,6 +678,7 @@ async function initDatabase() {
     INSERT OR IGNORE INTO coupons (id, code, discount, quantity, used_count, expired_date, status, usable_by, description)
     VALUES ('coup-1', 'SALE30', 30, 100, 10, '2026-12-31', 'active', 'user', 'Giảm giá 30% cho khách hàng mới mua khóa học.')
   `);
+
   // Seed default contact info
   await database.run(`
     INSERT OR IGNORE INTO contact_info (id, type, value)
@@ -642,7 +722,7 @@ async function initDatabase() {
     )
   `);
 
-  // Database Migrations for Coupons Table (Add usable_by & description if they do not exist)
+  // Database Migrations for Coupons Table
   try {
     await database.exec(`ALTER TABLE coupons ADD COLUMN usable_by TEXT DEFAULT 'user'`);
   } catch (e) {
@@ -684,7 +764,6 @@ async function initDatabase() {
       )
     `);
 
-    const now = new Date().toISOString();
     await database.run(`INSERT OR IGNORE INTO site_settings (id, site_name, site_tagline, updated_at)
       VALUES ('settings-main', 'DRIVE MH', 'Nền tảng học trực tuyến hàng đầu', ?)`, [now]);
   } catch (e) {
@@ -706,13 +785,12 @@ async function initDatabase() {
     
     const guidesCount = await database.get("SELECT COUNT(*) as count FROM affiliate_guides");
     if (guidesCount.count === 0) {
-      const nowStr = new Date().toISOString();
       await database.run(`
         INSERT INTO affiliate_guides (id, title, content, display_order, created_at)
         VALUES 
           ('guide-1', 'Hướng dẫn bắt đầu làm Tiếp thị liên kết', 'Chào mừng bạn đến với chương trình Affiliate của DRIVE MH! Để bắt đầu giới thiệu khóa học và nhận hoa hồng, hãy thực hiện các bước sau:\n\n1. Lấy mã tiếp thị liên kết (mã CTV) của bạn ở bảng điều khiển chính.\n2. Chia sẻ đường link giới thiệu của bạn cho bạn bè hoặc trên các mạng xã hội (Facebook, YouTube, TikTok, Zalo).\n3. Khi có người click vào link giới thiệu và mua khóa học thành công, bạn sẽ nhận được hoa hồng tự động từ 10% đến 30% giá trị đơn hàng.', 1, ?),
           ('guide-2', 'Quy định và Chính sách hoa hồng', 'Các quy định quan trọng khi tham gia chương trình Affiliate DRIVE MH:\n\n- Không tự đặt hàng qua link giới thiệu của chính mình.\n- Không chạy quảng cáo sử dụng các từ khóa thương hiệu DRIVE MH.\n- Hoa hồng sẽ được tính và phê duyệt tự động sau khi đơn hàng của học viên hoàn thành.\n- Bạn có thể yêu cầu rút tiền về tài khoản ngân hàng bất cứ lúc nào khi số dư khả dụng đạt tối thiểu 100.000đ.', 2, ?);
-      `, [nowStr, nowStr]);
+      `, [now, now]);
     }
 
     // Create Affiliate Settings Table
@@ -750,8 +828,6 @@ async function initDatabase() {
       )
     `);
 
-    const now = new Date().toISOString();
-    // Only insert default if table is empty
     const existingConfig = await database.get("SELECT COUNT(*) as count FROM email_config");
     if (existingConfig.count === 0) {
       await database.run(`INSERT INTO email_config (id, service, host, port, secure, email, password, from_name, updated_at)
@@ -782,7 +858,6 @@ async function initDatabase() {
       )
     `);
 
-    const now = new Date().toISOString();
     await database.run(`INSERT OR IGNORE INTO payment_methods (id, method_key, method_name, icon, description, account_number, account_holder, bank_name, qr_code_image, phone_number, is_active, display_order, created_at, updated_at)
       VALUES 
         ('pm-001', 'momo', 'Ví MoMo', '🟣', 'Thanh toán nhanh qua MoMo', NULL, 'Phạm Tấn Thông', NULL, NULL, '0901234567', 1, 1, ?, ?),
@@ -792,8 +867,9 @@ async function initDatabase() {
     console.error("Error creating/seeding payment_methods:", e);
   }
 
-  console.log("Database initialized successfully!");
+  console.log("Database initialized successfully with complete indexes and constraints!");
 }
+
 module.exports = {
   getDatabase,
   initDatabase

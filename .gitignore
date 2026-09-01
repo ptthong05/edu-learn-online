@@ -13,12 +13,16 @@ build/
 # Environment
 .env
 .env.local
+.env.jira
+.env.*
 
 # Test outputs & Logs
 output/
 automation-tests/output/
+coverage/
 *.log
 *.pid
+*.sqlite-journal
 
 # Temporary Jira sync files
 *.txt
@@ -26,4 +30,7 @@ automation-tests/output/
 !package.json
 !package-lock.json
 !tsconfig.json
+!.eslintrc.json
 !EduLearnOnline.postman_collection.json
+!openapi.json
+!**/openapi.json
