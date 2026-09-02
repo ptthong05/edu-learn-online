@@ -176,7 +176,7 @@ jobs:
           path: edu-learn-project/backend/backend.log
           if-no-files-found: ignore
           retention-days: 7
-    ord-327:
+     ord-327:
     name: ORD-327 - Coupons API
     runs-on: ubuntu-latest
 
@@ -237,7 +237,7 @@ jobs:
           path: |
             automation-tests/tests/ORD-323/ORD-327/output/ORD-327_Newman_Report.html
             automation-tests/tests/ORD-323/ORD-327/output/ORD-327_JUnit.xml
-          retention-days: 30  
+          retention-days: 30
 
   # =========================================================
   # ORD-323 - Full Regression
