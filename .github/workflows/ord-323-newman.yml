@@ -177,6 +177,7 @@ jobs:
   # =========================================================
   # ORD-327 - Coupons API
   # Requires Authentication bootstrap for adminToken
+  # ORD-327 CI verified
   # =========================================================
   ord-327:
     name: ORD-327 - Coupons API
