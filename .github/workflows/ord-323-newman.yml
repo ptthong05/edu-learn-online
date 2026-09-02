@@ -92,6 +92,90 @@ jobs:
           path: edu-learn-project/backend/backend.log
           if-no-files-found: ignore
           retention-days: 7
+    # =========================================================
+  # ORD-326 - Courses API
+  # Run all tests under ORD-326 only
+  # =========================================================
+  ord-326:
+    name: ORD-326 - Courses API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend dependencies
+        working-directory: edu-learn-project/backend
+        run: npm ci
+
+      - name: Start backend
+        working-directory: edu-learn-project/backend
+        run: |
+          npm start > backend.log 2>&1 &
+          echo $! > backend.pid
+
+      - name: Wait for backend
+        run: |
+          echo "Waiting for backend..."
+
+          for i in {1..30}; do
+            if curl --fail --silent http://localhost:5000/api/health > /dev/null; then
+              echo "Backend is ready."
+              exit 0
+            fi
+
+            echo "Attempt $i/30 - backend not ready yet"
+            sleep 2
+          done
+
+          echo "Backend failed to start."
+          cat edu-learn-project/backend/backend.log || true
+          exit 1
+
+      - name: Install Newman and HTML reporter
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-htmlextra
+
+      - name: Show Newman version
+        run: newman --version
+
+      - name: Create ORD-326 report directory
+        run: |
+          mkdir -p automation-tests/tests/ORD-323/ORD-326/output
+
+      - name: Run ORD-326 Courses tests
+        run: |
+          newman run EduLearnOnline.postman_collection.json \
+            --folder "2. Courses API (ORD-326)" \
+            -r cli,htmlextra,junit \
+            --reporter-htmlextra-export automation-tests/tests/ORD-323/ORD-326/output/ORD-326_Newman_Report.html \
+            --reporter-junit-export automation-tests/tests/ORD-323/ORD-326/output/ORD-326_JUnit.xml
+
+      - name: Upload ORD-326 Newman reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ORD-326-Newman-Reports
+          path: |
+            automation-tests/tests/ORD-323/ORD-326/output/ORD-326_Newman_Report.html
+            automation-tests/tests/ORD-323/ORD-326/output/ORD-326_JUnit.xml
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload ORD-326 backend log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ORD-326-Backend-Log
+          path: edu-learn-project/backend/backend.log
+          if-no-files-found: ignore
+          retention-days: 7
 
   # =========================================================
   # ORD-323 - Full Regression

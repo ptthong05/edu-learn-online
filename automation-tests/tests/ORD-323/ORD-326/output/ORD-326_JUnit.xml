@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="EduLearnOnline API Testing Collection v3" tests="7" time="0.140">
+  <testsuite name="2. Courses API (ORD-326) / 2.1 [Happy+Schema] GET /courses - Danh sách khóa học" id="96926ecc-9a37-4918-9bf4-4400c35d0381" timestamp="2026-09-02T16:34:24.542Z" tests="5" failures="0" errors="0" time="0.083">
+    <testcase name="Status 200 OK" time="0.083" classname="2CoursesApiOrd32621HappySchemaGetCoursesDanhSachKhoaHc"/>
+    <testcase name="Response là array không rỗng" time="0.083" classname="2CoursesApiOrd32621HappySchemaGetCoursesDanhSachKhoaHc"/>
+    <testcase name="Course có schema bắt buộc" time="0.083" classname="2CoursesApiOrd32621HappySchemaGetCoursesDanhSachKhoaHc"/>
+    <testcase name="Lưu dữ liệu course cho các test sau" time="0.083" classname="2CoursesApiOrd32621HappySchemaGetCoursesDanhSachKhoaHc"/>
+    <testcase name="Response time dưới 2000 ms" time="0.083" classname="2CoursesApiOrd32621HappySchemaGetCoursesDanhSachKhoaHc"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.2 [Filter] GET /courses?category=:categoryId" id="64a61f07-9a70-443e-87e7-8c04d893c8c0" timestamp="2026-09-02T16:34:24.542Z" tests="3" failures="0" errors="0" time="0.011">
+    <testcase name="Status 200 OK" time="0.011" classname="2CoursesApiOrd32622FilterGetCoursesCategoryCategoryId"/>
+    <testcase name="Response là array" time="0.011" classname="2CoursesApiOrd32622FilterGetCoursesCategoryCategoryId"/>
+    <testcase name="Tất cả course đúng category_id" time="0.011" classname="2CoursesApiOrd32622FilterGetCoursesCategoryCategoryId"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.3 [Sort+BVA] GET /courses?sort_by=price-asc" id="9f6f28f5-eb30-4097-99ed-1e0a35db9c41" timestamp="2026-09-02T16:34:24.542Z" tests="2" failures="0" errors="0" time="0.009">
+    <testcase name="Status 200 OK" time="0.009" classname="2CoursesApiOrd32623SortBvaGetCoursesSortByPriceAsc"/>
+    <testcase name="Giá hiệu lực tăng dần" time="0.009" classname="2CoursesApiOrd32623SortBvaGetCoursesSortByPriceAsc"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.4 [Search] GET /courses?search=:keyword" id="1d8cee55-de5c-4505-8e07-6560820b4095" timestamp="2026-09-02T16:34:24.542Z" tests="3" failures="0" errors="0" time="0.008">
+    <testcase name="Status 200 OK" time="0.008" classname="2CoursesApiOrd32624SearchGetCoursesSearchKeyword"/>
+    <testcase name="Response là array không rỗng" time="0.008" classname="2CoursesApiOrd32624SearchGetCoursesSearchKeyword"/>
+    <testcase name="Mọi tiêu đề chứa từ khóa" time="0.008" classname="2CoursesApiOrd32624SearchGetCoursesSearchKeyword"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.5 [Happy] GET /courses/:id - Chi tiết khóa học" id="fb067cee-5dc7-4bc0-8bc7-585d8075393d" timestamp="2026-09-02T16:34:24.542Z" tests="3" failures="0" errors="0" time="0.009">
+    <testcase name="Status 200 OK" time="0.009" classname="2CoursesApiOrd32625HappyGetCoursesIdChiTitKhoaHc"/>
+    <testcase name="Response là object chi tiết" time="0.009" classname="2CoursesApiOrd32625HappyGetCoursesIdChiTitKhoaHc"/>
+    <testcase name="Đúng courseId và đủ field" time="0.009" classname="2CoursesApiOrd32625HappyGetCoursesIdChiTitKhoaHc"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.6 [Negative] GET /courses/not-found - Không tồn tại" id="c9fa87ae-efa8-4155-a8d8-14cf2584b8fc" timestamp="2026-09-02T16:34:24.542Z" tests="2" failures="0" errors="0" time="0.007">
+    <testcase name="Status 404 Not Found" time="0.007" classname="2CoursesApiOrd32626NegativeGetCoursesNotFoundKhongTnTi"/>
+    <testcase name="Có message lỗi" time="0.007" classname="2CoursesApiOrd32626NegativeGetCoursesNotFoundKhongTnTi"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.7 [Filter+BVA] GET /courses?price_range=free" id="ca21db3c-c507-426b-b788-de6ec1da2dbc" timestamp="2026-09-02T16:34:24.542Z" tests="3" failures="0" errors="0" time="0.013">
+    <testcase name="Status 200 OK" time="0.013" classname="2CoursesApiOrd32627FilterBvaGetCoursesPriceRangeFree"/>
+    <testcase name="Response là array" time="0.013" classname="2CoursesApiOrd32627FilterBvaGetCoursesPriceRangeFree"/>
+    <testcase name="Mọi course trả về có price bằng 0" time="0.013" classname="2CoursesApiOrd32627FilterBvaGetCoursesPriceRangeFree"/>
+  </testsuite>
+</testsuites>
