@@ -34,3 +34,7 @@ coverage/
 !EduLearnOnline.postman_collection.json
 !openapi.json
 !**/openapi.json
+!automation-tests/tests/ORD-323/
+!automation-tests/tests/ORD-323/**/
+!automation-tests/tests/ORD-323/**/output/
+!automation-tests/tests/ORD-323/**/output/**

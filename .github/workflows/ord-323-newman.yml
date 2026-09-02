@@ -1,45 +1,20 @@
-name: ORD-323 Newman API Tests
+name: ORD-323 Postman API Tests
 
 on:
   push:
     branches:
       - feature/test-automation-nonfunc
+
   pull_request:
     branches:
       - main
 
+  workflow_dispatch:
+
 jobs:
-  newman-tests:
-    name: ${{ matrix.ticket }}
+  ord-325:
+    name: ORD-325 - Authentication API
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - ticket: ORD-325 Authentication
-            folder: 1. Authentication (ORD-325)
-            report: ORD-325_Newman_Report.html
-
-          - ticket: ORD-326 Courses
-            folder: 2. Courses API (ORD-326)
-            report: ORD-326_Newman_Report.html
-
-          - ticket: ORD-327 Coupons
-            folder: 3. Coupons API (ORD-327)
-            report: ORD-327_Newman_Report.html
-
-          - ticket: ORD-328 Orders
-            folder: 4. Orders API (ORD-328)
-            report: ORD-328_Newman_Report.html
-
-          - ticket: ORD-329 Affiliate
-            folder: 5. Affiliate Marketing (ORD-329)
-            report: ORD-329_Newman_Report.html
-
-          - ticket: ORD-330 Automation
-            folder: 6. Automation - Newman & Environment (ORD-330)
-            report: ORD-330_Newman_Report.html
 
     steps:
       - name: Checkout repository
@@ -57,25 +32,147 @@ jobs:
       - name: Start backend
         working-directory: edu-learn-project/backend
         run: |
-          npm start &
-          sleep 8
+          npm start > backend.log 2>&1 &
+          echo $! > backend.pid
+
+      - name: Wait for backend
+        run: |
+          echo "Waiting for backend..."
+
+          for i in {1..30}; do
+            if curl --fail --silent http://localhost:5000/api/health > /dev/null; then
+              echo "Backend is ready."
+              exit 0
+            fi
+
+            echo "Attempt $i/30 - backend not ready yet"
+            sleep 2
+          done
+
+          echo "Backend failed to start."
+          cat edu-learn-project/backend/backend.log || true
+          exit 1
 
       - name: Install Newman and HTML reporter
         run: |
           npm install -g newman
           npm install -g newman-reporter-htmlextra
 
-      - name: Run ${{ matrix.ticket }}
-        run: |
-          mkdir -p newman-reports
-          newman run EduLearnOnline.postman_collection.json \
-            --folder "${{ matrix.folder }}" \
-            -r cli,htmlextra \
-            --reporter-htmlextra-export "newman-reports/${{ matrix.report }}"
+      - name: Show Newman version
+        run: newman --version
 
-      - name: Upload ${{ matrix.ticket }} report
+      - name: Create ORD-325 report directory
+        run: |
+          mkdir -p automation-tests/tests/ORD-323/ORD-325/output
+
+      - name: Run ORD-325 Authentication tests
+        run: |
+          newman run EduLearnOnline.postman_collection.json \
+            --folder "1. Authentication (ORD-325)" \
+            -r cli,htmlextra,junit \
+            --reporter-htmlextra-export automation-tests/tests/ORD-323/ORD-325/output/ORD-325_Newman_Report.html \
+            --reporter-junit-export automation-tests/tests/ORD-323/ORD-325/output/ORD-325_JUnit.xml
+
+      - name: Upload ORD-325 Newman reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.ticket }}-Report
-          path: newman-reports/${{ matrix.report }}
+          name: ORD-325-Newman-Reports
+          path: |
+            automation-tests/tests/ORD-323/ORD-325/output/ORD-325_Newman_Report.html
+            automation-tests/tests/ORD-323/ORD-325/output/ORD-325_JUnit.xml
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload ORD-325 backend log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ORD-325-Backend-Log
+          path: edu-learn-project/backend/backend.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # =========================================================
+  # ORD-323 - Full Regression
+  # Chạy toàn bộ Postman Collection theo đúng thứ tự
+  # =========================================================
+  ord-323-newman:
+    name: ORD-323 - Full Postman/Newman Regression
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend dependencies
+        working-directory: edu-learn-project/backend
+        run: npm ci
+
+      - name: Start backend
+        working-directory: edu-learn-project/backend
+        run: |
+          npm start > backend.log 2>&1 &
+          echo $! > backend.pid
+
+      - name: Wait for backend
+        run: |
+          echo "Waiting for backend..."
+
+          for i in {1..30}; do
+            if curl --fail --silent http://localhost:5000/api/health > /dev/null; then
+              echo "Backend is ready."
+              exit 0
+            fi
+
+            echo "Attempt $i/30 - backend not ready yet"
+            sleep 2
+          done
+
+          echo "Backend failed to start."
+          cat edu-learn-project/backend/backend.log || true
+          exit 1
+
+      - name: Install Newman and HTML reporter
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-htmlextra
+
+      - name: Show Newman version
+        run: newman --version
+
+      - name: Create ORD-323 report directory
+        run: |
+          mkdir -p automation-tests/tests/ORD-323/output
+
+      - name: Run ORD-323 full collection
+        run: |
+          newman run EduLearnOnline.postman_collection.json \
+            -r cli,htmlextra,junit \
+            --reporter-htmlextra-export automation-tests/tests/ORD-323/output/ORD-323_Newman_Full_Report.html \
+            --reporter-junit-export automation-tests/tests/ORD-323/output/ORD-323_Newman_JUnit.xml
+
+      - name: Upload ORD-323 Newman reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ORD-323-Newman-Reports
+          path: |
+            automation-tests/tests/ORD-323/output/ORD-323_Newman_Full_Report.html
+            automation-tests/tests/ORD-323/output/ORD-323_Newman_JUnit.xml
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload ORD-323 backend log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ORD-323-Backend-Log
+          path: edu-learn-project/backend/backend.log
+          if-no-files-found: ignore
+          retention-days: 7
