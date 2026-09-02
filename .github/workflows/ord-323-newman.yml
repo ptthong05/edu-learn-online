@@ -176,6 +176,68 @@ jobs:
           path: edu-learn-project/backend/backend.log
           if-no-files-found: ignore
           retention-days: 7
+    ord-327:
+    name: ORD-327 - Coupons API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend dependencies
+        working-directory: edu-learn-project/backend
+        run: npm ci
+
+      - name: Start backend
+        working-directory: edu-learn-project/backend
+        run: |
+          npm start > backend.log 2>&1 &
+          echo $! > backend.pid
+
+      - name: Wait for backend
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://localhost:5000/api/health > /dev/null; then
+              echo "Backend is ready."
+              exit 0
+            fi
+            sleep 2
+          done
+
+          cat edu-learn-project/backend/backend.log || true
+          exit 1
+
+      - name: Install Newman and HTML reporter
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-htmlextra
+
+      - name: Create ORD-327 report directory
+        run: mkdir -p automation-tests/tests/ORD-323/ORD-327/output
+
+      - name: Run ORD-327 Coupons tests
+        run: |
+          newman run EduLearnOnline.postman_collection.json \
+            --folder "1. Authentication (ORD-325)" \
+            --folder "3. Coupons API (ORD-327)" \
+            -r cli,htmlextra,junit \
+            --reporter-htmlextra-export automation-tests/tests/ORD-323/ORD-327/output/ORD-327_Newman_Report.html \
+            --reporter-junit-export automation-tests/tests/ORD-323/ORD-327/output/ORD-327_JUnit.xml
+
+      - name: Upload ORD-327 Newman reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ORD-327-Newman-Reports
+          path: |
+            automation-tests/tests/ORD-323/ORD-327/output/ORD-327_Newman_Report.html
+            automation-tests/tests/ORD-323/ORD-327/output/ORD-327_JUnit.xml
+          retention-days: 30  
 
   # =========================================================
   # ORD-323 - Full Regression
