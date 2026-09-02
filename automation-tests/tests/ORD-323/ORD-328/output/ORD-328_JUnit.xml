@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="EduLearnOnline API Testing Collection v3" tests="28" time="0.899">
+  <testsuite name="1. Authentication (ORD-325) / 1.1 [Happy] POST /auth/register - Đăng ký thành công" id="8cddaf8e-02af-465c-8218-1218e4725a04" timestamp="2026-09-02T17:24:02.973Z" tests="6" failures="0" errors="0" time="0.262">
+    <testcase name="TC-01 - Status 201 Created" time="0.262" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
+    <testcase name="TC-01 - Response time dưới 2000ms" time="0.262" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
+    <testcase name="TC-01 - Có thông báo tạo tài khoản thành công" time="0.262" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
+    <testcase name="TC-01 - Không làm lộ password" time="0.262" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
+    <testcase name="TC-01 - Register không trả JWT token" time="0.262" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
+    <testcase name="TC-01 - Register không trả user object" time="0.262" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
+  </testsuite>
+  <testsuite name="1. Authentication (ORD-325) / 1.2 [Negative] POST /auth/register - Email đã tồn tại" id="348f1fb4-c8fc-4eb2-b456-1588cec00830" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.011">
+    <testcase name="Status 400 khi email đã tồn tại" time="0.011" classname="1AuthenticationOrd32512NegativePostAuthRegisterEmailDaTnTi"/>
+    <testcase name="Có message lỗi và không có token" time="0.011" classname="1AuthenticationOrd32512NegativePostAuthRegisterEmailDaTnTi"/>
+  </testsuite>
+  <testsuite name="1. Authentication (ORD-325) / 1.3 [Negative] POST /auth/register - Thiếu email bắt buộc" id="ddb48b48-b8f5-4187-8e45-e938a17b7b70" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.006">
+    <testcase name="Status 400 Bad Request" time="0.006" classname="1AuthenticationOrd32513NegativePostAuthRegisterThiuEmailBtBuc"/>
+    <testcase name="Có message validation" time="0.006" classname="1AuthenticationOrd32513NegativePostAuthRegisterThiuEmailBtBuc"/>
+  </testsuite>
+  <testsuite name="1. Authentication (ORD-325) / 1.4 [Happy] POST /auth/login - Đăng nhập và tạo token" id="b14972ce-b94a-4e85-98c5-dcc247b0a0ed" timestamp="2026-09-02T17:24:02.973Z" tests="4" failures="0" errors="0" time="0.127">
+    <testcase name="Status 200 OK" time="0.127" classname="1AuthenticationOrd32514HappyPostAuthLoginDangNhpVaToToken"/>
+    <testcase name="Có JWT token hợp lệ" time="0.127" classname="1AuthenticationOrd32514HappyPostAuthLoginDangNhpVaToToken"/>
+    <testcase name="Đúng user vừa đăng ký" time="0.127" classname="1AuthenticationOrd32514HappyPostAuthLoginDangNhpVaToToken"/>
+    <testcase name="Thiết lập adminToken thành công" time="0.127" classname="1AuthenticationOrd32514HappyPostAuthLoginDangNhpVaToToken"/>
+  </testsuite>
+  <testsuite name="1. Authentication (ORD-325) / 1.5 [Negative] POST /auth/login - Sai mật khẩu" id="abc7638c-7a76-4b36-a14e-deafeaae4bfb" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.217">
+    <testcase name="Status 400 khi sai mật khẩu" time="0.217" classname="1AuthenticationOrd32515NegativePostAuthLoginSaiMtKhu"/>
+    <testcase name="Có message lỗi và không có token" time="0.217" classname="1AuthenticationOrd32515NegativePostAuthLoginSaiMtKhu"/>
+  </testsuite>
+  <testsuite name="1. Authentication (ORD-325) / 1.6 [Negative] POST /auth/login - Email không tồn tại" id="c2a6c898-a8f0-4bf9-9dbb-54bb74e565fb" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.011">
+    <testcase name="Status 400 khi tài khoản không tồn tại" time="0.011" classname="1AuthenticationOrd32516NegativePostAuthLoginEmailKhongTnTi"/>
+    <testcase name="Không trả token" time="0.011" classname="1AuthenticationOrd32516NegativePostAuthLoginEmailKhongTnTi"/>
+  </testsuite>
+  <testsuite name="1. Authentication (ORD-325) / 1.7 [Happy] GET /users/profile - Hồ sơ hiện tại" id="d433de0e-3f1f-4b7b-9395-ef13d728dac8" timestamp="2026-09-02T17:24:02.973Z" tests="3" failures="0" errors="0" time="0.007">
+    <testcase name="Status 200 OK" time="0.007" classname="1AuthenticationOrd32517HappyGetUsersProfileHSHinTi"/>
+    <testcase name="Có user và đủ field chính" time="0.007" classname="1AuthenticationOrd32517HappyGetUsersProfileHSHinTi"/>
+    <testcase name="Email khớp tài khoản vừa tạo" time="0.007" classname="1AuthenticationOrd32517HappyGetUsersProfileHSHinTi"/>
+  </testsuite>
+  <testsuite name="1. Authentication (ORD-325) / 1.8 [Auth] GET /users/profile - Không có token" id="7d3ef333-180c-4374-8c15-09ca8972391b" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.005">
+    <testcase name="Status 401 Unauthorized" time="0.005" classname="1AuthenticationOrd32518AuthGetUsersProfileKhongCoToken"/>
+    <testcase name="Có message unauthorized" time="0.005" classname="1AuthenticationOrd32518AuthGetUsersProfileKhongCoToken"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.1 [Happy+Schema] GET /courses - Danh sách khóa học" id="f904a55f-5a67-4e68-83c3-faafd67e0105" timestamp="2026-09-02T17:24:02.973Z" tests="5" failures="0" errors="0" time="0.006">
+    <testcase name="Status 200 OK" time="0.006" classname="2CoursesApiOrd32621HappySchemaGetCoursesDanhSachKhoaHc"/>
+    <testcase name="Response là array không rỗng" time="0.006" classname="2CoursesApiOrd32621HappySchemaGetCoursesDanhSachKhoaHc"/>
+    <testcase name="Course có schema bắt buộc" time="0.006" classname="2CoursesApiOrd32621HappySchemaGetCoursesDanhSachKhoaHc"/>
+    <testcase name="Lưu dữ liệu course cho các test sau" time="0.006" classname="2CoursesApiOrd32621HappySchemaGetCoursesDanhSachKhoaHc"/>
+    <testcase name="Response time dưới 2000 ms" time="0.006" classname="2CoursesApiOrd32621HappySchemaGetCoursesDanhSachKhoaHc"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.2 [Filter] GET /courses?category=:categoryId" id="bba62930-129b-4220-bcc3-384fe648dab9" timestamp="2026-09-02T17:24:02.973Z" tests="3" failures="0" errors="0" time="0.006">
+    <testcase name="Status 200 OK" time="0.006" classname="2CoursesApiOrd32622FilterGetCoursesCategoryCategoryId"/>
+    <testcase name="Response là array" time="0.006" classname="2CoursesApiOrd32622FilterGetCoursesCategoryCategoryId"/>
+    <testcase name="Tất cả course đúng category_id" time="0.006" classname="2CoursesApiOrd32622FilterGetCoursesCategoryCategoryId"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.3 [Sort+BVA] GET /courses?sort_by=price-asc" id="f2e36ace-417b-4b10-9cf9-085fa77681c2" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.006">
+    <testcase name="Status 200 OK" time="0.006" classname="2CoursesApiOrd32623SortBvaGetCoursesSortByPriceAsc"/>
+    <testcase name="Giá hiệu lực tăng dần" time="0.006" classname="2CoursesApiOrd32623SortBvaGetCoursesSortByPriceAsc"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.4 [Search] GET /courses?search=:keyword" id="832d9228-c90a-4937-ba56-61f117e4f352" timestamp="2026-09-02T17:24:02.973Z" tests="3" failures="0" errors="0" time="0.006">
+    <testcase name="Status 200 OK" time="0.006" classname="2CoursesApiOrd32624SearchGetCoursesSearchKeyword"/>
+    <testcase name="Response là array không rỗng" time="0.006" classname="2CoursesApiOrd32624SearchGetCoursesSearchKeyword"/>
+    <testcase name="Mọi tiêu đề chứa từ khóa" time="0.006" classname="2CoursesApiOrd32624SearchGetCoursesSearchKeyword"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.5 [Happy] GET /courses/:id - Chi tiết khóa học" id="011f47c5-b884-4a63-b054-a5c60bc76556" timestamp="2026-09-02T17:24:02.973Z" tests="3" failures="0" errors="0" time="0.006">
+    <testcase name="Status 200 OK" time="0.006" classname="2CoursesApiOrd32625HappyGetCoursesIdChiTitKhoaHc"/>
+    <testcase name="Response là object chi tiết" time="0.006" classname="2CoursesApiOrd32625HappyGetCoursesIdChiTitKhoaHc"/>
+    <testcase name="Đúng courseId và đủ field" time="0.006" classname="2CoursesApiOrd32625HappyGetCoursesIdChiTitKhoaHc"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.6 [Negative] GET /courses/not-found - Không tồn tại" id="a24f4095-4ed4-4a57-8adc-172e541735ed" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.004">
+    <testcase name="Status 404 Not Found" time="0.004" classname="2CoursesApiOrd32626NegativeGetCoursesNotFoundKhongTnTi"/>
+    <testcase name="Có message lỗi" time="0.004" classname="2CoursesApiOrd32626NegativeGetCoursesNotFoundKhongTnTi"/>
+  </testsuite>
+  <testsuite name="2. Courses API (ORD-326) / 2.7 [Filter+BVA] GET /courses?price_range=free" id="29470a5a-8394-4495-a4ca-133fa6f23f11" timestamp="2026-09-02T17:24:02.973Z" tests="3" failures="0" errors="0" time="0.006">
+    <testcase name="Status 200 OK" time="0.006" classname="2CoursesApiOrd32627FilterBvaGetCoursesPriceRangeFree"/>
+    <testcase name="Response là array" time="0.006" classname="2CoursesApiOrd32627FilterBvaGetCoursesPriceRangeFree"/>
+    <testcase name="Mọi course trả về có price bằng 0" time="0.006" classname="2CoursesApiOrd32627FilterBvaGetCoursesPriceRangeFree"/>
+  </testsuite>
+  <testsuite name="3. Coupons API (ORD-327) / 3.1 [Happy] POST /coupons/validate - Coupon phần trăm" id="0d5db523-fed6-46b8-acd1-59a180a89eb9" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.004">
+    <testcase name="Status 200 OK" time="0.004" classname="3CouponsApiOrd32731HappyPostCouponsValidateCouponPhnTram"/>
+    <testcase name="Coupon hợp lệ và giảm 20%" time="0.004" classname="3CouponsApiOrd32731HappyPostCouponsValidateCouponPhnTram"/>
+  </testsuite>
+  <testsuite name="3. Coupons API (ORD-327) / 3.2 [Happy] POST /coupons/validate - Coupon số tiền cố định" id="4d21b71b-94c0-452a-b611-c1f3074596be" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.005">
+    <testcase name="Status 200 OK" time="0.005" classname="3CouponsApiOrd32732HappyPostCouponsValidateCouponSTinCDnh"/>
+    <testcase name="Giảm cố định 50.000đ" time="0.005" classname="3CouponsApiOrd32732HappyPostCouponsValidateCouponSTinCDnh"/>
+  </testsuite>
+  <testsuite name="3. Coupons API (ORD-327) / 3.3 [Negative] POST /coupons/validate - Coupon hết hạn" id="bc1e0c83-6f71-4485-85af-cacc4b4edf85" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.006">
+    <testcase name="Status 400 khi hết hạn" time="0.006" classname="3CouponsApiOrd32733NegativePostCouponsValidateCouponHtHn"/>
+    <testcase name="valid=false và có message" time="0.006" classname="3CouponsApiOrd32733NegativePostCouponsValidateCouponHtHn"/>
+  </testsuite>
+  <testsuite name="3. Coupons API (ORD-327) / 3.4 [Negative] POST /coupons/validate - Coupon không tồn tại" id="b5c866ea-548a-4109-8e3c-b6fae3944b20" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.006">
+    <testcase name="Status 404 Not Found" time="0.006" classname="3CouponsApiOrd32734NegativePostCouponsValidateCouponKhongTnTi"/>
+    <testcase name="valid=false và không có calculated_discount" time="0.006" classname="3CouponsApiOrd32734NegativePostCouponsValidateCouponKhongTnTi"/>
+  </testsuite>
+  <testsuite name="3. Coupons API (ORD-327) / 3.5 [BVA] POST /coupons/validate - Dưới giá trị đơn tối thiểu" id="407d134c-467e-4bc1-be28-fca30f9c6fd7" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.005">
+    <testcase name="Status 400 dưới min order" time="0.005" classname="3CouponsApiOrd32735BvaPostCouponsValidateDiGiaTrDnTiThiu"/>
+    <testcase name="Trả đúng min_order_amount" time="0.005" classname="3CouponsApiOrd32735BvaPostCouponsValidateDiGiaTrDnTiThiu"/>
+  </testsuite>
+  <testsuite name="3. Coupons API (ORD-327) / 3.6 [Public] POST /coupons/validate - Không cần token" id="07194469-aafc-413b-a2a3-e1ecdb580bbd" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.006">
+    <testcase name="Status 200 dù không có Authorization" time="0.006" classname="3CouponsApiOrd32736PublicPostCouponsValidateKhongCnToken"/>
+    <testcase name="Coupon public vẫn hợp lệ" time="0.006" classname="3CouponsApiOrd32736PublicPostCouponsValidateKhongCnToken"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.1 [Happy] POST /orders - Tạo đơn hàng" id="0c43f613-0277-4993-9201-d7e1f022285a" timestamp="2026-09-02T17:24:02.973Z" tests="3" failures="0" errors="0" time="0.037">
+    <testcase name="Status 201 Created" time="0.037" classname="4OrdersApiOrd32841HappyPostOrdersToDnHang"/>
+    <testcase name="Response có orderId" time="0.037" classname="4OrdersApiOrd32841HappyPostOrdersToDnHang"/>
+    <testcase name="Có message đặt hàng thành công" time="0.037" classname="4OrdersApiOrd32841HappyPostOrdersToDnHang"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.2 [Auth] POST /orders - Không có token" id="60747926-7f67-4243-88b1-e91710caa257" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.057">
+    <testcase name="Status 401 Unauthorized" time="0.057" classname="4OrdersApiOrd32842AuthPostOrdersKhongCoToken"/>
+    <testcase name="Không có orderId" time="0.057" classname="4OrdersApiOrd32842AuthPostOrdersKhongCoToken"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.3 [Negative] POST /orders - Giỏ hàng rỗng" id="80716bac-4bf8-40a3-8c60-47bc2a60c7ef" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.007">
+    <testcase name="Status 400 Bad Request" time="0.007" classname="4OrdersApiOrd32843NegativePostOrdersGiHangRng"/>
+    <testcase name="Có message giỏ hàng trống" time="0.007" classname="4OrdersApiOrd32843NegativePostOrdersGiHangRng"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.4 [Happy] GET /orders - Danh sách đơn của user" id="b7708547-310f-4bd9-b526-64c57a9d0604" timestamp="2026-09-02T17:24:02.973Z" tests="3" failures="0" errors="0" time="0.008">
+    <testcase name="Status 200 OK" time="0.008" classname="4OrdersApiOrd32844HappyGetOrdersDanhSachDnCaUser"/>
+    <testcase name="Response là array" time="0.008" classname="4OrdersApiOrd32844HappyGetOrdersDanhSachDnCaUser"/>
+    <testcase name="Danh sách chứa đơn vừa tạo" time="0.008" classname="4OrdersApiOrd32844HappyGetOrdersDanhSachDnCaUser"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.5 [Happy] GET /orders/:id - Chi tiết đơn hàng" id="6826ffa0-fe6a-42ee-a53c-efdc63ec7ca7" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.012">
+    <testcase name="Status 200 OK" time="0.012" classname="4OrdersApiOrd32845HappyGetOrdersIdChiTitDnHang"/>
+    <testcase name="Đúng orderId và có items" time="0.012" classname="4OrdersApiOrd32845HappyGetOrdersIdChiTitDnHang"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.6 [Upload] POST /orders/upload-proof - Bằng chứng thanh toán" id="aa4a276c-7a18-4fdf-adc5-243eaeaf4a29" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.020">
+    <testcase name="Status 200 OK" time="0.020" classname="4OrdersApiOrd32846UploadPostOrdersUploadProofBngChngThanhToan"/>
+    <testcase name="Có message tải proof thành công" time="0.020" classname="4OrdersApiOrd32846UploadPostOrdersUploadProofBngChngThanhToan"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.7 [Admin] PUT /admin/orders/:id/status - Hoàn tất đơn" id="6528b3e6-4f8d-45ae-a595-a79925d43e38" timestamp="2026-09-02T17:24:02.973Z" tests="2" failures="0" errors="0" time="0.024">
+    <testcase name="Status 200 OK" time="0.024" classname="4OrdersApiOrd32847AdminPutAdminOrdersIdStatusHoanTtDn"/>
+    <testcase name="Status trả về là completed" time="0.024" classname="4OrdersApiOrd32847AdminPutAdminOrdersIdStatusHoanTtDn"/>
+  </testsuite>
+</testsuites>
