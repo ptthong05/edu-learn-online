@@ -983,22 +983,7 @@ app.get('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole(['
   }
 });
 
-/**
- * ORD-646: Hàm logic nghiệp vụ xác thực và tính toán mã giảm giá validateCoupon
- * Kiểm thử hộp trắng (White-box Testing) Statement Coverage & Branch Coverage:
- * -----------------------------------------------------------------------------
- * Branch 1 (UT-CP-01): if (!inputCode)               ➔ HTTP 400 Mã rỗng/thiếu
- * Branch 2 (UT-CP-02): if (!coupon)                  ➔ HTTP 404 Không tìm thấy trong CSDL
- * Branch 3 (UT-CP-03): if (status !== 'active')      ➔ HTTP 400 Mã bị vô hiệu hóa
- * Branch 4 (UT-CP-04): if (expired_date < today)     ➔ HTTP 400 Mã đã hết hạn
- * Branch 5 (UT-CP-05): if (used_count >= quantity)   ➔ HTTP 400 Mã đã hết lượt sử dụng
- * Branch 6 (UT-CP-06): if (orderAmount < min_order)  ➔ HTTP 400 Chưa đạt giá trị tối thiểu
- * Branch 7 (UT-CP-07): if (discount_type === percent)➔ HTTP 200 Tính giảm theo %
- * Branch 8 (UT-CP-09): else (discount_type === fixed)➔ HTTP 200 Tính giảm số tiền cố định
- * Branch 9 (UT-CP-08): if (max_discount > 0)         ➔ HTTP 200 Chặn mức giảm trần tối đa
- * Branch 10 (UT-CP-10): Math.min(orderTotal, discount)➔ Không làm âm tổng đơn hàng
- * -----------------------------------------------------------------------------
- */
+
 function validateCoupon(inputCode, coupon, orderAmount, todayStr = new Date().toISOString().split('T')[0]) {
   // [Branch 1 / UT-CP-01]: Kiểm tra tính hợp lệ của input mã do người dùng nhập
   if (!inputCode || typeof inputCode !== 'string' || !inputCode.trim()) {
