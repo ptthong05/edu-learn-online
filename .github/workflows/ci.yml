@@ -253,13 +253,19 @@ jobs:
       - name: Run CodeceptJS Automation Tests
         working-directory: ./automation-tests
         run: |
-          npx codeceptjs run --steps || {
-            echo "========================================"
-            echo "FAILED SCREENSHOTS"
-            echo "========================================"
-            ls -la ./output/ || true
-            exit 1
-          }
+          TEST_COUNT=$(find ./tests -type f -name "*_test.js" 2>/dev/null | wc -l)
+          if [ "$TEST_COUNT" -gt 0 ]; then
+            echo "Found $TEST_COUNT test file(s). Running CodeceptJS..."
+            npx codeceptjs run --steps || {
+              echo "========================================"
+              echo "FAILED SCREENSHOTS"
+              echo "========================================"
+              ls -la ./output/ || true
+              exit 1
+            }
+          else
+            echo "No test files matching '*_test.js' found in ./tests. Skipping CodeceptJS execution."
+          fi
         env:
           DONT_FAIL_ON_EMPTY_RUN: "true"
 
