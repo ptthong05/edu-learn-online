@@ -983,22 +983,52 @@ app.get('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole(['
   }
 });
 
-// Helper: Validate coupon eligibility rules
-function validateCouponEligibility(coupon, orderAmount, todayStr) {
+/**
+ * ORD-646: Hàm logic nghiệp vụ xác thực và tính toán mã giảm giá validateCoupon
+ * Kiểm thử hộp trắng (White-box Testing) Statement Coverage & Branch Coverage:
+ * -----------------------------------------------------------------------------
+ * Branch 1 (UT-CP-01): if (!inputCode)               ➔ HTTP 400 Mã rỗng/thiếu
+ * Branch 2 (UT-CP-02): if (!coupon)                  ➔ HTTP 404 Không tìm thấy trong CSDL
+ * Branch 3 (UT-CP-03): if (status !== 'active')      ➔ HTTP 400 Mã bị vô hiệu hóa
+ * Branch 4 (UT-CP-04): if (expired_date < today)     ➔ HTTP 400 Mã đã hết hạn
+ * Branch 5 (UT-CP-05): if (used_count >= quantity)   ➔ HTTP 400 Mã đã hết lượt sử dụng
+ * Branch 6 (UT-CP-06): if (orderAmount < min_order)  ➔ HTTP 400 Chưa đạt giá trị tối thiểu
+ * Branch 7 (UT-CP-07): if (discount_type === percent)➔ HTTP 200 Tính giảm theo %
+ * Branch 8 (UT-CP-09): else (discount_type === fixed)➔ HTTP 200 Tính giảm số tiền cố định
+ * Branch 9 (UT-CP-08): if (max_discount > 0)         ➔ HTTP 200 Chặn mức giảm trần tối đa
+ * Branch 10 (UT-CP-10): Math.min(orderTotal, discount)➔ Không làm âm tổng đơn hàng
+ * -----------------------------------------------------------------------------
+ */
+function validateCoupon(inputCode, coupon, orderAmount, todayStr = new Date().toISOString().split('T')[0]) {
+  // [Branch 1 / UT-CP-01]: Kiểm tra tính hợp lệ của input mã do người dùng nhập
+  if (!inputCode || typeof inputCode !== 'string' || !inputCode.trim()) {
+    return { valid: false, status: 400, message: 'Vui lòng cung cấp mã giảm giá.' };
+  }
+
+  // [Branch 2 / UT-CP-02]: Kiểm tra bản ghi coupon có tồn tại trong CSDL không
   if (!coupon) {
     return { valid: false, status: 404, message: 'Mã giảm giá không tồn tại.' };
   }
+
+  // [Branch 3 / UT-CP-03]: Kiểm tra trạng thái coupon có đang kích hoạt không
   if (coupon.status !== 'active') {
     return { valid: false, status: 400, message: 'Mã giảm giá đã bị vô hiệu hóa.' };
   }
+
+  // [Branch 4 / UT-CP-04]: Kiểm tra hạn sử dụng so với ngày hiện tại
   if (coupon.expired_date < todayStr) {
     return { valid: false, status: 400, message: 'Mã giảm giá đã hết hạn sử dụng.' };
   }
+
+  // [Branch 5 / UT-CP-05]: Kiểm tra số lượt đã sử dụng so với tổng số lượng phát hành
   if (coupon.used_count >= coupon.quantity) {
     return { valid: false, status: 400, message: 'Mã giảm giá đã hết lượt sử dụng.' };
   }
+
+  // [Branch 6 / UT-CP-06]: Kiểm tra điều kiện giá trị đơn hàng tối thiểu
   const minOrder = Number(coupon.min_order_amount) || 0;
-  if (minOrder > 0 && Number(orderAmount || 0) < minOrder) {
+  const orderTotal = Math.max(0, Number(orderAmount) || 0);
+  if (minOrder > 0 && orderTotal < minOrder) {
     return {
       valid: false,
       status: 400,
@@ -1006,20 +1036,45 @@ function validateCouponEligibility(coupon, orderAmount, todayStr) {
       min_order_amount: minOrder,
     };
   }
-  return { valid: true };
+
+  // [Branch 7 & 8 / UT-CP-07 & UT-CP-09]: Tính toán mức giảm theo % hoặc số tiền cố định
+  const discountVal = Number(coupon.discount) || 0;
+  const isPercent = coupon.discount_type === 'percent' || (!coupon.discount_type && discountVal <= 100);
+  let calculatedDiscount = 0;
+
+  if (isPercent) {
+    // Branch 7: Giảm theo tỷ lệ phần trăm
+    calculatedDiscount = Math.round(orderTotal * discountVal / 100);
+  } else {
+    // Branch 8 & 10: Giảm cố định & chặn không để giảm vượt quá tổng tiền đơn
+    calculatedDiscount = Math.min(orderTotal, discountVal);
+  }
+
+  // [Branch 9 / UT-CP-08]: Áp dụng mức giảm trần tối đa (max_discount) nếu được cấu hình
+  const maxCap = Number(coupon.max_discount) || 0;
+  if (maxCap > 0) {
+    calculatedDiscount = Math.min(calculatedDiscount, maxCap);
+  }
+
+  // Trả về kết quả áp dụng coupon thành công (HTTP 200)
+  return {
+    valid: true,
+    status: 200,
+    message: 'Áp dụng mã giảm giá thành công!',
+    coupon,
+    calculated_discount: calculatedDiscount
+  };
 }
 
-// Helper: Calculate discount amount with type and max discount limits
-function calculateCouponDiscount(coupon, subtotal) {
-  const amount = Math.max(0, Number(subtotal) || 0);
-  const discountVal = Number(coupon?.discount) || 0;
-  const isPercent = coupon?.discount_type === 'percent' || (!coupon?.discount_type && discountVal <= 100);
-  const baseDiscount = isPercent
-    ? Math.round(amount * discountVal / 100)
-    : Math.min(amount, discountVal);
+// Giữ alias tương thích nếu có nơi gọi
+function validateCouponEligibility(coupon, orderAmount, todayStr) {
+  const res = validateCoupon('DUMMY', coupon, orderAmount, todayStr);
+  return res.valid ? { valid: true } : res;
+}
 
-  const maxCap = Number(coupon.max_discount) || 0;
-  return maxCap > 0 ? Math.min(baseDiscount, maxCap) : baseDiscount;
+function calculateCouponDiscount(coupon, subtotal) {
+  const res = validateCoupon('DUMMY', coupon, subtotal);
+  return res.calculated_discount || 0;
 }
 
 // Helper: Normalize coupon payload
@@ -1121,19 +1176,12 @@ app.post('/api/coupons/validate', async (req, res) => {
     const coupon = await db.get("SELECT * FROM coupons WHERE UPPER(code) = ?", [code.toUpperCase()]);
     const today = new Date().toISOString().split('T')[0];
 
-    const check = validateCouponEligibility(coupon, order_amount, today);
-    if (!check.valid) {
-      return res.status(check.status).json(check);
+    const result = validateCoupon(code, coupon, order_amount, today);
+    if (!result.valid) {
+      return res.status(result.status).json(result);
     }
 
-    const calculatedDiscount = calculateCouponDiscount(coupon, order_amount);
-
-    res.json({
-      valid: true,
-      message: 'Áp dụng mã giảm giá thành công!',
-      coupon,
-      calculated_discount: calculatedDiscount
-    });
+    res.json(result);
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server khi xác thực coupon.', error: err.message });
   }
