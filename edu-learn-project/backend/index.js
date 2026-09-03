@@ -13,10 +13,22 @@ const multer = require('multer');
 const { sendOrderConfirmationEmail } = require('./emailService');
 
 const app = express();
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5000',
+  'http://127.0.0.1:5000'
+];
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
 
@@ -1000,9 +1012,11 @@ function validateCouponEligibility(coupon, orderAmount, todayStr) {
 // Helper: Calculate discount amount with type and max discount limits
 function calculateCouponDiscount(coupon, subtotal) {
   const amount = Math.max(0, Number(subtotal) || 0);
-  const baseDiscount = coupon.discount_type === 'percent'
-    ? Math.round(amount * coupon.discount / 100)
-    : Math.min(amount, coupon.discount);
+  const discountVal = Number(coupon?.discount) || 0;
+  const isPercent = coupon?.discount_type === 'percent' || (!coupon?.discount_type && discountVal <= 100);
+  const baseDiscount = isPercent
+    ? Math.round(amount * discountVal / 100)
+    : Math.min(amount, discountVal);
 
   const maxCap = Number(coupon.max_discount) || 0;
   return maxCap > 0 ? Math.min(baseDiscount, maxCap) : baseDiscount;
