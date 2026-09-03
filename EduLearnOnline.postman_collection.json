@@ -1,1095 +1,1852 @@
 {
   "info": {
-    "_postman_id": "edulearn-online-collection-v2",
-    "name": "EduLearnOnline API Testing Collection v2",
-    "description": "Postman Test Suite đầy đủ cho Sprint 8 - EduLearnOnline (ORD-325→ORD-330).\nBao gồm: Positive, Negative, Boundary Value, Schema Validation, Authorization Testing.\nChạy theo thứ tự từ trên xuống để chain token tự động.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "_postman_id": "17179d09-915f-41f6-b30e-16c704b9a147",
+    "name": "EduLearnOnline API Testing Collection v3",
+    "description": "Bộ kiểm thử API dùng chung cho EduLearnOnline, đồng bộ với Backend hiện tại.\nBao phủ 34 API test: Auth (ORD-325), Courses (ORD-326), Coupons (ORD-327), Orders (ORD-328), Affiliate (ORD-329).\nThêm 3 request kiểm tra Newman/Environment cho ORD-330.\nCollection tự tạo tài khoản, token và coupon fixture theo từng lần chạy; chạy tuần tự từ trên xuống.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56973388",
+    "_collection_link": "https://go.postman.co/collection/56973388-17179d09-915f-41f6-b30e-16c704b9a147?source=collection_link"
   },
-  "variable": [
-    { "key": "baseUrl",    "value": "http://localhost:5000", "type": "string" },
-    { "key": "authToken",  "value": "", "type": "string" },
-    { "key": "adminToken", "value": "", "type": "string", "description": "Điền token Admin thủ công hoặc tạo request Login Admin riêng" },
-    { "key": "courseId",   "value": "1",  "type": "string" },
-    { "key": "orderId",    "value": "",   "type": "string" }
-  ],
   "item": [
-
     {
       "name": "1. Authentication (ORD-325)",
-      "description": "Kiểm thử toàn bộ luồng xác thực: Register, Login, Me, token validation.",
       "item": [
-
         {
-          "name": "1.1 [Happy] POST /register — Đăng ký thành công",
+          "name": "1.1 [Happy] POST /auth/register - Đăng ký thành công",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runId = Date.now().toString();\nconst suffix = runId.slice(-8);\npm.collectionVariables.set('testRunId', runId);\npm.collectionVariables.set('testEmail', `newman_${runId}@edulearn.test`);\npm.collectionVariables.set('testPhone', `09${suffix}`);\npm.collectionVariables.set('testPassword', 'Pass123!@#');\npm.collectionVariables.set('couponPercentCode', `PCT${suffix}`);\npm.collectionVariables.set('couponFixedCode', `FIX${suffix}`);\npm.collectionVariables.set('couponExpiredCode', `EXP${suffix}`);\npm.collectionVariables.set('couponMinCode', `MIN${suffix}`);\npm.collectionVariables.unset('authToken');\npm.collectionVariables.unset('adminToken');\npm.collectionVariables.unset('orderId');\npm.collectionVariables.unset('affiliateId');\npm.collectionVariables.unset('affiliateCode');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-01 - Status 201 Created', () => {\n    pm.response.to.have.status(201);\n});\n\npm.test('TC-01 - Response time dưới 2000ms', () => {\n    pm.expect(pm.response.responseTime).to.be.below(2000);\n});\n\npm.test('TC-01 - Có thông báo tạo tài khoản thành công', () => {\n    const json = pm.response.json();\n\n    pm.expect(json).to.have.property('message');\n    pm.expect(json.message).to.be.a('string').and.not.empty;\n});\n\npm.test('TC-01 - Không làm lộ password', () => {\n    const json = pm.response.json();\n    pm.expect(json).to.not.have.property('password');\n});\n\npm.test('TC-01 - Register không trả JWT token', () => {\n    const json = pm.response.json();\n    pm.expect(json).to.not.have.property('token');\n});\n\npm.test('TC-01 - Register không trả user object', () => {\n    const json = pm.response.json();\n    pm.expect(json).to.not.have.property('user');\n});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"full_name\": \"Học Viên Test\",\n  \"email\": \"test_{{$timestamp}}@edulearn.vn\",\n  \"password\": \"Pass123!@#\",\n  \"phone\": \"0901234567\"\n}"
+              "raw": "{\n  \"full_name\": \"Học Viên Newman\",\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"phone\": \"{{testPhone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 201 Created', () => {",
-              "  pm.response.to.have.status(201);",
-              "});",
-              "pm.test('Response có token JWT', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('token').that.is.a('string').and.not.empty;",
-              "  pm.collectionVariables.set('authToken', json.token);",
-              "});",
-              "pm.test('Response có user object với email và full_name', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('user');",
-              "  pm.expect(json.user).to.have.property('email');",
-              "  pm.expect(json.user).to.have.property('full_name');",
-              "  pm.expect(json.user).to.not.have.property('password');",
-              "});",
-              "pm.test('Content-Type là application/json', () => {",
-              "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "1.2 [Negative] POST /register — Email đã tồn tại",
+          "name": "1.2 [Negative] POST /auth/register - Email đã tồn tại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 khi email đã tồn tại', () => pm.response.to.have.status(400));",
+                  "pm.test('Có message lỗi và không có token', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('message').that.is.a('string').and.not.empty;",
+                  "  pm.expect(json).to.not.have.property('token');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"full_name\": \"User Trùng Email\",\n  \"email\": \"user@gmail.com\",\n  \"password\": \"Pass123!@#\",\n  \"phone\": \"0901234568\"\n}"
+              "raw": "{\n  \"full_name\": \"User Trùng Email\",\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"phone\": \"0987654321\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 400 hoặc 409 khi email đã tồn tại', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([400, 409]);",
-              "});",
-              "pm.test('Response có thông báo lỗi', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('message');",
-              "  pm.expect(json.message).to.be.a('string').and.not.empty;",
-              "});",
-              "pm.test('Response KHÔNG có token', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.not.have.property('token');",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "1.3 [Negative] POST /register — Thiếu field bắt buộc (email)",
+          "name": "1.3 [Negative] POST /auth/register - Thiếu email bắt buộc",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Có message validation', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"full_name\": \"Thiếu Email\",\n  \"password\": \"Pass123!@#\"\n}"
+              "raw": "{\n  \"full_name\": \"Thiếu Email\",\n  \"password\": \"{{testPassword}}\",\n  \"phone\": \"0976543210\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 400 Bad Request khi thiếu field', () => {",
-              "  pm.response.to.have.status(400);",
-              "});",
-              "pm.test('Response có message validation error', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('message');",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "1.4 [Happy] POST /login — Đăng nhập thành công",
+          "name": "1.4 [Happy] POST /auth/login - Đăng nhập và tạo token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Có JWT token hợp lệ', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.token).to.be.a('string');",
+                  "  pm.expect(json.token.split('.')).to.have.lengthOf(3);",
+                  "  pm.collectionVariables.set('authToken', json.token);",
+                  "});",
+                  "pm.test('Đúng user vừa đăng ký', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.user.email).to.equal(pm.collectionVariables.get('testEmail'));",
+                  "  pm.expect(json.user).to.not.have.property('password');",
+                  "});",
+                  "const baseUrl = pm.collectionVariables.get('baseUrl');",
+                  "pm.sendRequest({",
+                  "  url: `${baseUrl}/api/auth/login`,",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: { mode: 'raw', raw: JSON.stringify({",
+                  "    email: pm.collectionVariables.get('adminEmail'),",
+                  "    password: pm.collectionVariables.get('adminPassword')",
+                  "  }) }",
+                  "}, (error, response) => {",
+                  "  pm.test('Thiết lập adminToken thành công', () => {",
+                  "    pm.expect(error).to.equal(null);",
+                  "    pm.expect(response.code).to.equal(200);",
+                  "  });",
+                  "  if (!error && response.code === 200) {",
+                  "    pm.collectionVariables.set('adminToken', response.json().token);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@gmail.com\",\n  \"password\": \"User123!\"\n}"
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 OK', () => {",
-              "  pm.response.to.have.status(200);",
-              "});",
-              "pm.test('Response có JWT token hợp lệ (3 phần cách nhau bởi .)', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json.token).to.be.a('string');",
-              "  pm.expect(json.token.split('.').length).to.equal(3);",
-              "  pm.collectionVariables.set('authToken', json.token);",
-              "});",
-              "pm.test('Response có user info', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json.user).to.have.property('email', 'user@gmail.com');",
-              "  pm.expect(json.user).to.not.have.property('password');",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "1.5 [Negative] POST /login — Sai password",
+          "name": "1.5 [Negative] POST /auth/login - Sai mật khẩu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 khi sai mật khẩu', () => pm.response.to.have.status(400));",
+                  "pm.test('Có message lỗi và không có token', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('message');",
+                  "  pm.expect(json).to.not.have.property('token');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@gmail.com\",\n  \"password\": \"SaiPassword999\"\n}"
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"SaiPassword999!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 401 Unauthorized khi sai password', () => {",
-              "  pm.response.to.have.status(401);",
-              "});",
-              "pm.test('Response có message lỗi, KHÔNG có token', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('message');",
-              "  pm.expect(json).to.not.have.property('token');",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "1.6 [Negative] POST /login — Email không tồn tại",
+          "name": "1.6 [Negative] POST /auth/login - Email không tồn tại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 khi tài khoản không tồn tại', () => pm.response.to.have.status(400));",
+                  "pm.test('Không trả token', () => pm.expect(pm.response.json()).to.not.have.property('token'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"khong_ton_tai_99999@edulearn.vn\",\n  \"password\": \"AnyPassword123!\"\n}"
+              "raw": "{\n  \"email\": \"khong_ton_tai_99999@edulearn.test\",\n  \"password\": \"AnyPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 401 hoặc 404 khi email không tồn tại', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([401, 404]);",
-              "});",
-              "pm.test('Response KHÔNG có token', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.not.have.property('token');",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "1.7 [Happy] GET /me — Lấy thông tin user hiện tại",
+          "name": "1.7 [Happy] GET /users/profile - Hồ sơ hiện tại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Có user và đủ field chính', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('user');",
+                  "  pm.expect(json.user).to.include.all.keys('id', 'full_name', 'email', 'role', 'status');",
+                  "  pm.expect(json.user).to.not.have.property('password');",
+                  "});",
+                  "pm.test('Email khớp tài khoản vừa tạo', () => {",
+                  "  pm.expect(pm.response.json().user.email).to.equal(pm.collectionVariables.get('testEmail'));",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
-            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api","auth","me"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "profile"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 OK', () => {",
-              "  pm.response.to.have.status(200);",
-              "});",
-              "pm.test('Response có đầy đủ user fields', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('id');",
-              "  pm.expect(json).to.have.property('email');",
-              "  pm.expect(json).to.have.property('full_name');",
-              "  pm.expect(json).to.not.have.property('password');",
-              "});",
-              "pm.test('email là string hợp lệ', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json.email).to.match(/^[^@]+@[^@]+\\.[^@]+$/);",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "1.8 [Auth] GET /me — Không có token → 401",
+          "name": "1.8 [Auth] GET /users/profile - Không có token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('Có message unauthorized', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api","auth","me"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "profile"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 401 khi không có Authorization header', () => {",
-              "  pm.response.to.have.status(401);",
-              "});",
-              "pm.test('Response có message unauthorized', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('message');",
-              "});"
-            ]}
-          }]
+          "response": []
         }
-
-      ]
+      ],
+      "description": "Đăng ký, đăng nhập, validation, JWT và hồ sơ người dùng."
     },
-
     {
       "name": "2. Courses API (ORD-326)",
-      "description": "Kiểm thử API khóa học: list, filter, sort, search, detail, not-found, pagination.",
       "item": [
-
         {
-          "name": "2.1 [Happy+Schema] GET /courses — Danh sách + Schema Validation",
+          "name": "2.1 [Happy+Schema] GET /courses - Danh sách khóa học",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response là array không rỗng', () => {",
+                  "  const courses = pm.response.json();",
+                  "  pm.expect(courses).to.be.an('array').that.is.not.empty;",
+                  "});",
+                  "pm.test('Course có schema bắt buộc', () => {",
+                  "  pm.response.json().slice(0, 5).forEach(course => {",
+                  "    pm.expect(course).to.include.all.keys('id', 'title', 'price', 'status');",
+                  "    pm.expect(course.title).to.be.a('string');",
+                  "    pm.expect(Number(course.price)).to.be.at.least(0);",
+                  "  });",
+                  "});",
+                  "pm.test('Lưu dữ liệu course cho các test sau', () => {",
+                  "  const courses = pm.response.json();",
+                  "  const selected = courses.find(c => c.id === 'course-1') || courses.find(c => c.category_id) || courses[0];",
+                  "  pm.collectionVariables.set('courseId', selected.id);",
+                  "  pm.collectionVariables.set('courseTitle', selected.title);",
+                  "  pm.collectionVariables.set('coursePrice', String(Number(selected.sale_price ?? selected.price)));",
+                  "  pm.collectionVariables.set('categoryId', selected.category_id || 'cat-1');",
+                  "  pm.collectionVariables.set('searchKeyword', (selected.title || '').trim().split(/\\s+/)[0]);",
+                  "});",
+                  "pm.test('Response time dưới 2000 ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "url": { "raw": "{{baseUrl}}/api/courses", "host": ["{{baseUrl}}"], "path": ["api","courses"] }
-          },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 OK', () => {",
-              "  pm.response.to.have.status(200);",
-              "});",
-              "pm.test('Response là array', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.be.an('array');",
-              "  pm.expect(json.length).to.be.greaterThan(0);",
-              "});",
-              "pm.test('Mỗi course có đầy đủ fields bắt buộc', () => {",
-              "  const courses = pm.response.json();",
-              "  courses.slice(0, 3).forEach(course => {",
-              "    pm.expect(course).to.have.property('id');",
-              "    pm.expect(course).to.have.property('title').that.is.a('string');",
-              "    pm.expect(course).to.have.property('price').that.is.a('number');",
-              "    pm.expect(course.price).to.be.at.least(0);",
-              "  });",
-              "});",
-              "pm.test('Lưu courseId đầu tiên cho các test tiếp theo', () => {",
-              "  const courses = pm.response.json();",
-              "  if (courses.length > 0) {",
-              "    pm.collectionVariables.set('courseId', courses[0].id);",
-              "  }",
-              "});",
-              "pm.test('Response time < 2000ms', () => {",
-              "  pm.expect(pm.response.responseTime).to.be.below(2000);",
-              "});"
-            ]}
-          }]
-        },
-
-        {
-          "name": "2.2 [Filter] GET /courses?category=programming",
-          "request": {
-            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/courses?category=programming",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","courses"],
-              "query": [{ "key": "category", "value": "programming" }]
+              "raw": "{{baseUrl}}/api/courses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ]
             }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 OK', () => {",
-              "  pm.response.to.have.status(200);",
-              "});",
-              "pm.test('Response là array (có thể rỗng nếu chưa có data)', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.be.an('array');",
-              "});",
-              "pm.test('Các khóa học trả về đúng category (nếu có)', () => {",
-              "  const courses = pm.response.json();",
-              "  if (courses.length > 0) {",
-              "    courses.forEach(c => {",
-              "      pm.expect(c.category).to.equal('programming');",
-              "    });",
-              "  }",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "2.3 [Sort+BVA] GET /courses?sort_by=price_asc — Verify thứ tự tăng dần",
+          "name": "2.2 [Filter] GET /courses?category=:categoryId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response là array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('Tất cả course đúng category_id', () => {",
+                  "  const expected = pm.collectionVariables.get('categoryId');",
+                  "  pm.response.json().forEach(course => pm.expect(course.category_id).to.equal(expected));",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/courses?sort_by=price_asc",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","courses"],
-              "query": [{ "key": "sort_by", "value": "price_asc" }]
+              "raw": "{{baseUrl}}/api/courses?category={{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "{{categoryId}}"
+                }
+              ]
             }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 OK', () => {",
-              "  pm.response.to.have.status(200);",
-              "});",
-              "pm.test('Danh sách sắp xếp price tăng dần', () => {",
-              "  const courses = pm.response.json();",
-              "  if (courses.length >= 2) {",
-              "    for (let i = 0; i < courses.length - 1; i++) {",
-              "      pm.expect(courses[i].price).to.be.at.most(courses[i+1].price);",
-              "    }",
-              "  }",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "2.4 [Search] GET /courses?search=python",
+          "name": "2.3 [Sort+BVA] GET /courses?sort_by=price-asc",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Giá hiệu lực tăng dần', () => {",
+                  "  const prices = pm.response.json().map(c => Number(c.sale_price ?? c.price));",
+                  "  for (let i = 1; i < prices.length; i += 1) pm.expect(prices[i - 1]).to.be.at.most(prices[i]);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/courses?search=python",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","courses"],
-              "query": [{ "key": "search", "value": "python" }]
+              "raw": "{{baseUrl}}/api/courses?sort_by=price-asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ],
+              "query": [
+                {
+                  "key": "sort_by",
+                  "value": "price-asc"
+                }
+              ]
             }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 OK', () => {",
-              "  pm.response.to.have.status(200);",
-              "});",
-              "pm.test('Response là array', () => {",
-              "  pm.expect(pm.response.json()).to.be.an('array');",
-              "});",
-              "pm.test('Kết quả chứa từ khóa python trong title hoặc description (nếu có)', () => {",
-              "  const courses = pm.response.json();",
-              "  if (courses.length > 0) {",
-              "    const firstTitle = (courses[0].title || '').toLowerCase();",
-              "    const firstDesc  = (courses[0].description || '').toLowerCase();",
-              "    pm.expect(firstTitle + firstDesc).to.include('python');",
-              "  }",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "2.5 [Happy] GET /courses/:id — Chi tiết 1 khóa học",
+          "name": "2.4 [Search] GET /courses?search=:keyword",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response là array không rỗng', () => pm.expect(pm.response.json()).to.be.an('array').that.is.not.empty);",
+                  "pm.test('Mọi tiêu đề chứa từ khóa', () => {",
+                  "  const keyword = pm.collectionVariables.get('searchKeyword').toLowerCase();",
+                  "  pm.response.json().forEach(c => pm.expect((c.title || '').toLowerCase()).to.include(keyword));",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "url": { "raw": "{{baseUrl}}/api/courses/{{courseId}}", "host": ["{{baseUrl}}"], "path": ["api","courses","{{courseId}}"] }
-          },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 OK', () => {",
-              "  pm.response.to.have.status(200);",
-              "});",
-              "pm.test('Response là object course đơn lẻ (không phải array)', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.be.an('object').and.not.an('array');",
-              "});",
-              "pm.test('Course detail có đầy đủ fields', () => {",
-              "  const c = pm.response.json();",
-              "  pm.expect(c).to.have.property('id');",
-              "  pm.expect(c).to.have.property('title');",
-              "  pm.expect(c).to.have.property('price');",
-              "  pm.expect(c).to.have.property('description');",
-              "});"
-            ]}
-          }]
-        },
-
-        {
-          "name": "2.6 [Negative] GET /courses/99999 — Course không tồn tại → 404",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/api/courses/99999", "host": ["{{baseUrl}}"], "path": ["api","courses","99999"] }
-          },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 404 Not Found', () => {",
-              "  pm.response.to.have.status(404);",
-              "});",
-              "pm.test('Response có error message', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('message');",
-              "});"
-            ]}
-          }]
-        },
-
-        {
-          "name": "2.7 [Pagination] GET /courses?page=1&limit=5",
-          "request": {
-            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/courses?page=1&limit=5",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","courses"],
-              "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "5" }]
+              "raw": "{{baseUrl}}/api/courses?search={{searchKeyword}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "{{searchKeyword}}"
+                }
+              ]
             }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 OK', () => {",
-              "  pm.response.to.have.status(200);",
-              "});",
-              "pm.test('Số lượng items ≤ 5 (limit được áp dụng)', () => {",
-              "  const json = pm.response.json();",
-              "  const items = Array.isArray(json) ? json : (json.data || json.items || []);",
-              "  pm.expect(items.length).to.be.at.most(5);",
-              "});"
-            ]}
-          }]
+          "response": []
+        },
+        {
+          "name": "2.5 [Happy] GET /courses/:id - Chi tiết khóa học",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response là object chi tiết', () => pm.expect(pm.response.json()).to.be.an('object').and.not.an('array'));",
+                  "pm.test('Đúng courseId và đủ field', () => {",
+                  "  const course = pm.response.json();",
+                  "  pm.expect(course.id).to.equal(pm.collectionVariables.get('courseId'));",
+                  "  pm.expect(course).to.include.all.keys('title', 'price', 'description');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/{{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "courses",
+                "{{courseId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.6 [Negative] GET /courses/not-found - Không tồn tại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('Có message lỗi', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/course-khong-ton-tai-newman",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "courses",
+                "course-khong-ton-tai-newman"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.7 [Filter+BVA] GET /courses?price_range=free",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response là array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('Mọi course trả về có price bằng 0', () => {",
+                  "  pm.response.json().forEach(course => pm.expect(Number(course.price)).to.equal(0));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses?price_range=free",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ],
+              "query": [
+                {
+                  "key": "price_range",
+                  "value": "free"
+                }
+              ]
+            }
+          },
+          "response": []
         }
-
-      ]
+      ],
+      "description": "Danh sách, schema, lọc danh mục, sắp xếp, tìm kiếm, chi tiết và giá miễn phí."
     },
-
     {
       "name": "3. Coupons API (ORD-327)",
-      "description": "Kiểm thử validate mã giảm giá: percent, fixed, hết hạn, không tồn tại, boundary amount, unauthorized.",
       "item": [
-
         {
-          "name": "3.1 [Happy] POST /coupons/validate — Mã % hợp lệ",
+          "name": "3.1 [Happy] POST /coupons/validate - Coupon phần trăm",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const baseUrl = pm.collectionVariables.get('baseUrl');",
+                  "const adminToken = pm.collectionVariables.get('adminToken');",
+                  "if (!adminToken) throw new Error('adminToken chưa được thiết lập từ request 1.4');",
+                  "const fixtures = [",
+                  "  { code: pm.collectionVariables.get('couponPercentCode'), discount: 20, discount_type: 'percent', min_order_amount: 0, expired_date: '2099-12-31' },",
+                  "  { code: pm.collectionVariables.get('couponFixedCode'), discount: 50000, discount_type: 'fixed', min_order_amount: 0, expired_date: '2099-12-31' },",
+                  "  { code: pm.collectionVariables.get('couponExpiredCode'), discount: 10, discount_type: 'percent', min_order_amount: 0, expired_date: '2020-01-01' },",
+                  "  { code: pm.collectionVariables.get('couponMinCode'), discount: 10, discount_type: 'percent', min_order_amount: 100000, expired_date: '2099-12-31' }",
+                  "];",
+                  "const createFixture = (index) => {",
+                  "  if (index >= fixtures.length) return;",
+                  "  const fixture = fixtures[index];",
+                  "  pm.sendRequest({",
+                  "    url: `${baseUrl}/api/admin/coupons`,",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({",
+                  "      ...fixture, quantity: 100, status: 'active', usable_by: 'user', description: `Newman ${pm.collectionVariables.get('testRunId')}`",
+                  "    }) }",
+                  "  }, (error, response) => {",
+                  "    if (error) throw error;",
+                  "    if (response.code !== 201) throw new Error(`Không tạo được coupon ${fixture.code}: HTTP ${response.code}`);",
+                  "    createFixture(index + 1);",
+                  "  });",
+                  "};",
+                  "createFixture(0);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Coupon hợp lệ và giảm 20%', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.valid).to.equal(true);",
+                  "  pm.expect(json.calculated_discount).to.equal(100000);",
+                  "  pm.expect(json.coupon.discount_type).to.equal('percent');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"code\": \"GIAM20\",\n  \"order_amount\": 500000\n}" },
-            "url": { "raw": "{{baseUrl}}/api/coupons/validate", "host": ["{{baseUrl}}"], "path": ["api","coupons","validate"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{couponPercentCode}}\",\n  \"order_amount\": 500000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "validate"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 OK với mã hợp lệ', () => {",
-              "  pm.response.to.have.status(200);",
-              "});",
-              "pm.test('Response có discount_amount là số dương', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('discount_amount').that.is.a('number');",
-              "  pm.expect(json.discount_amount).to.be.above(0);",
-              "});",
-              "pm.test('Discount GIAM20 = 20% của 500000 = 100000', () => {",
-              "  const json = pm.response.json();",
-              "  if (json.discount_type === 'percent') {",
-              "    pm.expect(json.discount_amount).to.equal(100000);",
-              "  }",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "3.2 [Happy] POST /coupons/validate — Mã fixed amount",
+          "name": "3.2 [Happy] POST /coupons/validate - Coupon số tiền cố định",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Giảm cố định 50.000đ', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.valid).to.equal(true);",
+                  "  pm.expect(json.calculated_discount).to.equal(50000);",
+                  "  pm.expect(json.coupon.discount_type).to.equal('fixed');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"code\": \"FIXED50K\",\n  \"order_amount\": 300000\n}" },
-            "url": { "raw": "{{baseUrl}}/api/coupons/validate", "host": ["{{baseUrl}}"], "path": ["api","coupons","validate"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{couponFixedCode}}\",\n  \"order_amount\": 300000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "validate"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 OK hoặc 404 nếu coupon chưa có', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
-              "});",
-              "pm.test('Nếu 200: discount_amount là số cố định không phụ thuộc %', () => {",
-              "  if (pm.response.code === 200) {",
-              "    const json = pm.response.json();",
-              "    pm.expect(json.discount_amount).to.equal(50000);",
-              "  }",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "3.3 [Negative] POST /coupons/validate — Mã hết hạn",
+          "name": "3.3 [Negative] POST /coupons/validate - Coupon hết hạn",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 khi hết hạn', () => pm.response.to.have.status(400));",
+                  "pm.test('valid=false và có message', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.valid).to.equal(false);",
+                  "  pm.expect(json).to.have.property('message').that.is.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"code\": \"EXPIRED2023\",\n  \"order_amount\": 500000\n}" },
-            "url": { "raw": "{{baseUrl}}/api/coupons/validate", "host": ["{{baseUrl}}"], "path": ["api","coupons","validate"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{couponExpiredCode}}\",\n  \"order_amount\": 500000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "validate"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 400 hoặc 410 Gone khi mã hết hạn', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([400, 404, 410]);",
-              "});",
-              "pm.test('Response có message lỗi liên quan đến hết hạn', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('message').that.is.a('string');",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "3.4 [Negative] POST /coupons/validate — Mã không tồn tại",
+          "name": "3.4 [Negative] POST /coupons/validate - Coupon không tồn tại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('valid=false và không có calculated_discount', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.valid).to.equal(false);",
+                  "  pm.expect(json).to.not.have.property('calculated_discount');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"code\": \"KHONGTONTAI_XYZ999\",\n  \"order_amount\": 500000\n}" },
-            "url": { "raw": "{{baseUrl}}/api/coupons/validate", "host": ["{{baseUrl}}"], "path": ["api","coupons","validate"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"KHONGTONTAI_XYZ999\",\n  \"order_amount\": 500000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "validate"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 404 Not Found', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
-              "});",
-              "pm.test('KHÔNG có discount_amount trong response', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.not.have.property('discount_amount');",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "3.5 [BVA] POST /coupons/validate — order_amount dưới mức tối thiểu",
+          "name": "3.5 [BVA] POST /coupons/validate - Dưới giá trị đơn tối thiểu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 dưới min order', () => pm.response.to.have.status(400));",
+                  "pm.test('Trả đúng min_order_amount', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.valid).to.equal(false);",
+                  "  pm.expect(json.min_order_amount).to.equal(100000);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"code\": \"GIAM20\",\n  \"order_amount\": 1\n}" },
-            "url": { "raw": "{{baseUrl}}/api/coupons/validate", "host": ["{{baseUrl}}"], "path": ["api","coupons","validate"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{couponMinCode}}\",\n  \"order_amount\": 99999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "validate"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 400 khi order_amount quá nhỏ', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
-              "});",
-              "pm.test('Response có thông báo lỗi minimum amount', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('message');",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "3.6 [Auth] POST /coupons/validate — Không có token → 401",
+          "name": "3.6 [Public] POST /coupons/validate - Không cần token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 dù không có Authorization', () => pm.response.to.have.status(200));",
+                  "pm.test('Coupon public vẫn hợp lệ', () => pm.expect(pm.response.json().valid).to.equal(true));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"code\": \"GIAM20\",\n  \"order_amount\": 500000\n}" },
-            "url": { "raw": "{{baseUrl}}/api/coupons/validate", "host": ["{{baseUrl}}"], "path": ["api","coupons","validate"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{couponPercentCode}}\",\n  \"order_amount\": 500000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "validate"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 401 khi không có Authorization', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
-              "});"
-            ]}
-          }]
+          "response": []
         }
-
-      ]
+      ],
+      "description": "Percent, fixed amount, hết hạn, không tồn tại, min order và endpoint public."
     },
-
     {
       "name": "4. Orders API (ORD-328)",
-      "description": "Kiểm thử tạo đơn hàng, upload proof, admin duyệt/hủy đơn.",
       "item": [
-
         {
-          "name": "4.1 [Happy] POST /orders — Tạo đơn hàng thành công",
+          "name": "4.1 [Happy] POST /orders - Tạo đơn hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Response có orderId', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.orderId).to.be.a('string').and.not.empty;",
+                  "  pm.collectionVariables.set('orderId', json.orderId);",
+                  "});",
+                  "pm.test('Có message đặt hàng thành công', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"items\": [\n    { \"course_id\": {{courseId}}, \"price\": 499000 }\n  ],\n  \"coupon_code\": \"\",\n  \"affiliate_code\": \"\"\n}"
+              "raw": "{\n  \"items\": [\n    {\n      \"course_id\": \"{{courseId}}\",\n      \"price\": \"{{coursePrice}}\",\n      \"product_name\": \"{{courseTitle}}\"\n    }\n  ],\n  \"payment_method\": \"banking\",\n  \"total\": \"{{coursePrice}}\",\n  \"coupon_code\": \"\",\n  \"payment_qr_content\": \"NEWMAN-{{testRunId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api","orders"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 hoặc 201 Created', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-              "});",
-              "pm.test('Response có order id', () => {",
-              "  const json = pm.response.json();",
-              "  const order = json.order || json;",
-              "  pm.expect(order).to.have.property('id');",
-              "  pm.collectionVariables.set('orderId', order.id);",
-              "});",
-              "pm.test('Order có status hợp lệ', () => {",
-              "  const json = pm.response.json();",
-              "  const order = json.order || json;",
-              "  pm.expect(order).to.have.property('status');",
-              "  pm.expect(['pending','processing','completed']).to.include(order.status);",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "4.2 [Auth] POST /orders — Không có token → 401",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"items\": [{ \"course_id\": 1, \"price\": 499000 }]\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api","orders"] }
-          },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 401 khi không có token', () => {",
-              "  pm.response.to.have.status(401);",
-              "});",
-              "pm.test('KHÔNG có order trong response', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.not.have.property('order');",
-              "});"
-            ]}
-          }]
-        },
-
-        {
-          "name": "4.3 [Negative] POST /orders — items array rỗng → 400",
+          "name": "4.2 [Auth] POST /orders - Không có token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('Không có orderId', () => pm.expect(pm.response.json()).to.not.have.property('orderId'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{authToken}}" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n  \"items\": [],\n  \"coupon_code\": \"\"\n}" },
-            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api","orders"] }
-          },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 400 Bad Request khi items rỗng', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
-              "});",
-              "pm.test('Response có message lỗi validation', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('message');",
-              "});"
-            ]}
-          }]
-        },
-
-        {
-          "name": "4.4 [Negative] POST /orders — Course đã mua → Lỗi trùng",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"items\": [\n    { \"course_id\": {{courseId}}, \"price\": 499000 }\n  ]\n}"
+              "raw": "{\n  \"items\": [\n    {\n      \"course_id\": \"{{courseId}}\",\n      \"price\": \"{{coursePrice}}\"\n    }\n  ],\n  \"total\": \"{{coursePrice}}\",\n  \"payment_method\": \"banking\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api","orders"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 400 hoặc 409 khi đã mua khóa học này', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([400, 409]);",
-              "});",
-              "pm.test('Có message lỗi rõ ràng', () => {",
-              "  const json = pm.response.json();",
-              "  pm.expect(json).to.have.property('message').that.is.a('string');",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "4.5 [Happy] GET /orders/:id — Xem chi tiết đơn hàng",
+          "name": "4.3 [Negative] POST /orders - Giỏ hàng rỗng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Có message giỏ hàng trống', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [],\n  \"total\": 0,\n  \"payment_method\": \"banking\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.4 [Happy] GET /orders - Danh sách đơn của user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response là array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('Danh sách chứa đơn vừa tạo', () => {",
+                  "  const id = pm.collectionVariables.get('orderId');",
+                  "  pm.expect(pm.response.json().some(order => order.id === id)).to.equal(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
-            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["api","orders","{{orderId}}"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 OK', () => {",
-              "  pm.response.to.have.status(200);",
-              "});",
-              "pm.test('Order detail có đầy đủ fields', () => {",
-              "  const json = pm.response.json();",
-              "  const order = json.order || json;",
-              "  pm.expect(order).to.have.property('id');",
-              "  pm.expect(order).to.have.property('status');",
-              "  pm.expect(order).to.have.property('items');",
-              "  pm.expect(order.items).to.be.an('array');",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "4.6 [Upload] POST /orders/:id/upload-proof — Upload ảnh thanh toán",
+          "name": "4.5 [Happy] GET /orders/:id - Chi tiết đơn hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Đúng orderId và có items', () => {",
+                  "  const order = pm.response.json();",
+                  "  pm.expect(order.id).to.equal(pm.collectionVariables.get('orderId'));",
+                  "  pm.expect(order.items).to.be.an('array').that.is.not.empty;",
+                  "  pm.expect(order.status).to.equal('pending');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.6 [Upload] POST /orders/upload-proof - Bằng chứng thanh toán",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Có message tải proof thành công', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
             "body": {
-              "mode": "formdata",
-              "formdata": [
-                { "key": "proof_image", "type": "file", "src": [], "description": "Chọn ảnh proof thanh toán (jpg/png)" }
-              ]
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": \"{{orderId}}\",\n  \"proof_image\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/upload-proof", "host": ["{{baseUrl}}"], "path": ["api","orders","{{orderId}}","upload-proof"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/upload-proof",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "upload-proof"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 hoặc 201 sau khi upload proof', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([200, 201, 400]);",
-              "});",
-              "pm.test('Nếu thành công: response có proof_url', () => {",
-              "  if (pm.response.code === 200 || pm.response.code === 201) {",
-              "    const json = pm.response.json();",
-              "    pm.expect(json).to.have.property('proof_url').that.is.a('string');",
-              "  }",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "4.7 [Admin] PUT /orders/:id/status — Admin duyệt đơn hàng",
+          "name": "4.7 [Admin] PUT /admin/orders/:id/status - Hoàn tất đơn",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Status trả về là completed', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.status).to.equal('completed');",
+                  "  pm.expect(json).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"status\": \"approved\"\n}" },
-            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["api","orders","{{orderId}}","status"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orders/{{orderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orders",
+                "{{orderId}}",
+                "status"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "// Cần adminToken — set biến adminToken trước khi chạy test này",
-              "pm.test('Status 200 OK sau khi Admin duyệt', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
-              "  if (!pm.collectionVariables.get('adminToken')) {",
-              "    pm.test.skip('adminToken chưa được set — bỏ qua test này');",
-              "  }",
-              "});",
-              "pm.test('Nếu thành công: order status = approved', () => {",
-              "  if (pm.response.code === 200) {",
-              "    const json = pm.response.json();",
-              "    const order = json.order || json;",
-              "    pm.expect(order.status).to.equal('approved');",
-              "  }",
-              "});",
-              "pm.test('User thường gọi API này → 403 Forbidden', () => {",
-              "  // Thay adminToken bằng authToken để test case này",
-              "  // Kết quả phải là 403",
-              "});"
-            ]}
-          }]
+          "response": []
         }
-
-      ]
+      ],
+      "description": "Tạo đơn, phân quyền, validation, danh sách, chi tiết, proof và duyệt đơn."
     },
-
     {
       "name": "5. Affiliate Marketing (ORD-329)",
-      "description": "Kiểm thử đăng ký CTV, link giới thiệu, hoa hồng, rút tiền, authorization.",
       "item": [
-
         {
-          "name": "5.1 [Happy] GET /affiliate/stats — CTV xem thống kê hoa hồng",
+          "name": "5.1 [Happy] GET /affiliates/status - User chưa đăng ký CTV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('registered=false trước khi đăng ký', () => pm.expect(pm.response.json().registered).to.equal(false));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
-            "url": { "raw": "{{baseUrl}}/api/affiliate/stats", "host": ["{{baseUrl}}"], "path": ["api","affiliate","stats"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/affiliates/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "affiliates",
+                "status"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 hoặc 403 nếu user chưa là CTV', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
-              "});",
-              "pm.test('Nếu 200: Response có stats fields', () => {",
-              "  if (pm.response.code === 200) {",
-              "    const json = pm.response.json();",
-              "    pm.expect(json).to.have.property('total_commission').that.is.a('number');",
-              "    pm.expect(json.total_commission).to.be.at.least(0);",
-              "  }",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "5.2 [Auth] GET /affiliate/stats — Không có token → 401",
+          "name": "5.2 [Auth] GET /affiliates/status - Không có token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('Có message unauthorized', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/api/affiliate/stats", "host": ["{{baseUrl}}"], "path": ["api","affiliate","stats"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/affiliates/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "affiliates",
+                "status"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 401 khi không có token', () => {",
-              "  pm.response.to.have.status(401);",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "5.3 [Happy] POST /affiliate/register — Đăng ký làm CTV",
+          "name": "5.3 [Happy] POST /affiliates/register - Đăng ký CTV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Có message đăng ký thành công', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"bank_account\": \"0123456789\",\n  \"bank_name\": \"Vietcombank\",\n  \"referral_method\": \"social_media\"\n}" },
-            "url": { "raw": "{{baseUrl}}/api/affiliate/register", "host": ["{{baseUrl}}"], "path": ["api","affiliate","register"] }
-          },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 hoặc 201 hoặc 409 nếu đã đăng ký', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([200, 201, 409]);",
-              "});",
-              "pm.test('Nếu thành công: response có affiliate_code', () => {",
-              "  if (pm.response.code === 200 || pm.response.code === 201) {",
-              "    const json = pm.response.json();",
-              "    pm.expect(json).to.have.property('affiliate_code').that.is.a('string');",
-              "  }",
-              "});"
-            ]}
-          }]
-        },
-
-        {
-          "name": "5.4 [Happy] GET /affiliate/link — Lấy link giới thiệu",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
-            "url": { "raw": "{{baseUrl}}/api/affiliate/link", "host": ["{{baseUrl}}"], "path": ["api","affiliate","link"] }
-          },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 hoặc 403 nếu chưa là CTV', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
-              "});",
-              "pm.test('Nếu 200: link chứa affiliate_code trong URL', () => {",
-              "  if (pm.response.code === 200) {",
-              "    const json = pm.response.json();",
-              "    pm.expect(json).to.have.property('referral_link').that.is.a('string');",
-              "    pm.expect(json.referral_link).to.include('ref=');",
-              "  }",
-              "});"
-            ]}
-          }]
-        },
-
-        {
-          "name": "5.5 [Happy] GET /affiliate/history — Lịch sử hoa hồng",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
-            "url": { "raw": "{{baseUrl}}/api/affiliate/history", "host": ["{{baseUrl}}"], "path": ["api","affiliate","history"] }
-          },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200 hoặc 403', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
-              "});",
-              "pm.test('Nếu 200: Response là array', () => {",
-              "  if (pm.response.code === 200) {",
-              "    const json = pm.response.json();",
-              "    const list = Array.isArray(json) ? json : (json.data || []);",
-              "    pm.expect(list).to.be.an('array');",
-              "  }",
-              "});"
-            ]}
-          }]
-        },
-
-        {
-          "name": "5.6 [Happy] POST /affiliate/withdraw — Yêu cầu rút tiền hoa hồng",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{authToken}}" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n  \"amount\": 200000,\n  \"bank_account\": \"0123456789\",\n  \"bank_name\": \"Vietcombank\"\n}" },
-            "url": { "raw": "{{baseUrl}}/api/affiliate/withdraw", "host": ["{{baseUrl}}"], "path": ["api","affiliate","withdraw"] }
-          },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Status 200, 201, 400 hoặc 403', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 403]);",
-              "});",
-              "pm.test('Nếu 200/201: response có withdrawal_id', () => {",
-              "  if (pm.response.code === 200 || pm.response.code === 201) {",
-              "    const json = pm.response.json();",
-              "    pm.expect(json).to.have.property('withdrawal_id');",
-              "  }",
-              "});"
-            ]}
-          }]
-        }
-
-      ]
-    },
-
-    {
-      "name": "6. Automation — Newman & Collection Runner (ORD-330)",
-      "description": "Cấu hình chạy tự động toàn bộ collection với Newman CLI.",
-      "item": [
-
-        {
-          "name": "6.1 [Pre-request] Auto Login & Set Token",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@gmail.com\",\n  \"password\": \"User123!\"\n}"
+              "raw": "{\n  \"full_name\": \"Học Viên Newman\",\n  \"email\": \"{{testEmail}}\",\n  \"phone\": \"{{testPhone}}\",\n  \"bank_name\": \"Vietcombank\",\n  \"bank_account\": \"0123456789\",\n  \"address\": \"Đà Nẵng\",\n  \"dob\": \"2000-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/affiliates/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "affiliates",
+                "register"
+              ]
+            }
           },
+          "response": []
+        },
+        {
+          "name": "5.4 [Happy] GET /affiliates/status - Mã và link CTV",
           "event": [
             {
-              "listen": "prerequest",
-              "script": { "exec": [
-                "// Pre-request: đảm bảo baseUrl được set",
-                "if (!pm.collectionVariables.get('baseUrl')) {",
-                "  pm.collectionVariables.set('baseUrl', 'http://localhost:5000');",
-                "}"
-              ]}
-            },
-            {
               "listen": "test",
-              "script": { "exec": [
-                "pm.test('Auto-login thành công, token được set', () => {",
-                "  pm.response.to.have.status(200);",
-                "  const json = pm.response.json();",
-                "  pm.expect(json.token).to.be.a('string');",
-                "  pm.collectionVariables.set('authToken', json.token);",
-                "  console.log('✅ authToken đã được set tự động');",
-                "});",
-                "",
-                "// Hướng dẫn chạy Newman CLI:",
-                "// npm install -g newman",
-                "// newman run EduLearnOnline.postman_collection.json \\",
-                "//   --environment EduLearnOnline.environment.json \\",
-                "//   --reporters cli,json \\",
-                "//   --reporter-json-export newman-report.json"
-              ]}
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('registered=true, có ctv_code và affiliate_link', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.registered).to.equal(true);",
+                  "  pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.ctv_code).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.affiliate_link).to.include('ref=');",
+                  "  pm.collectionVariables.set('affiliateId', json.id);",
+                  "  pm.collectionVariables.set('affiliateCode', json.ctv_code);",
+                  "});"
+                ]
+              }
             }
-          ]
-        },
-
-        {
-          "name": "6.2 [Health Check] GET / — Server đang chạy",
+          ],
           "request": {
             "method": "GET",
-            "url": { "raw": "{{baseUrl}}/", "host": ["{{baseUrl}}"], "path": [""] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/affiliates/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "affiliates",
+                "status"
+              ]
+            }
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('Server đang chạy (status 200 hoặc 404 đều OK)', () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([200, 404, 301]);",
-              "});",
-              "pm.test('Response time < 1000ms', () => {",
-              "  pm.expect(pm.response.responseTime).to.be.below(1000);",
-              "});"
-            ]}
-          }]
+          "response": []
         },
-
         {
-          "name": "6.3 [Environment] Kiểm tra biến môi trường",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api","auth","me"] },
-            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
-          },
+          "name": "5.5 [Happy] GET /affiliate/report - Báo cáo CTV",
           "event": [
             {
-              "listen": "prerequest",
-              "script": { "exec": [
-                "// Validate environment variables trước khi chạy",
-                "const baseUrl = pm.collectionVariables.get('baseUrl');",
-                "const authToken = pm.collectionVariables.get('authToken');",
-                "",
-                "if (!baseUrl) {",
-                "  throw new Error('❌ baseUrl chưa được set! Vào Collection Variables để set.');",
-                "}",
-                "if (!authToken) {",
-                "  console.warn('⚠️ authToken trống — chạy request 1.4 (Login) trước.');",
-                "}",
-                "console.log('✅ baseUrl:', baseUrl);"
-              ]}
-            },
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Có stats, clicks và revenues đúng schema', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.stats).to.include.all.keys('totalClicks', 'totalOrders', 'totalCommission', 'totalRevenue');",
+                  "  pm.expect(json.clicks).to.be.an('array');",
+                  "  pm.expect(json.revenues).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/affiliate/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "affiliate",
+                "report"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.6 [BVA] POST /affiliate/withdrawals - Dưới mức tối thiểu",
+          "event": [
             {
               "listen": "test",
-              "script": { "exec": [
-                "pm.test('Tất cả collection variables đã được set', () => {",
-                "  pm.expect(pm.collectionVariables.get('baseUrl')).to.not.be.empty;",
-                "});",
-                "pm.test('authToken đã được set từ bước Login', () => {",
-                "  const token = pm.collectionVariables.get('authToken');",
-                "  pm.expect(token).to.be.a('string').and.not.empty;",
-                "});"
-              ]}
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 dưới mức rút tối thiểu', () => pm.response.to.have.status(400));",
+                  "pm.test('Có message validation', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
             }
-          ]
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 49999,\n  \"bank_name\": \"Vietcombank\",\n  \"bank_account\": \"0123456789\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/affiliate/withdrawals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "affiliate",
+                "withdrawals"
+              ]
+            }
+          },
+          "response": []
         }
-
-      ]
+      ],
+      "description": "Trạng thái đăng ký, authorization, đăng ký CTV, ref link, report và BVA rút tiền."
+    },
+    {
+      "name": "6. Automation - Newman & Environment (ORD-330)",
+      "item": [
+        {
+          "name": "6.1 [Runner] POST /auth/login - Auto login lại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Auto-login status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Cập nhật authToken thành công', () => {",
+                  "  const token = pm.response.json().token;",
+                  "  pm.expect(token).to.be.a('string').and.not.empty;",
+                  "  pm.collectionVariables.set('authToken', token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.2 [Health] GET /api/health - Backend sẵn sàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Health status=ok', () => pm.expect(pm.response.json().status).to.equal('ok'));",
+                  "pm.test('Response time dưới 1000 ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.3 [Environment] GET /users/profile - Xác minh biến",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "['baseUrl', 'authToken', 'adminToken', 'testEmail', 'courseId', 'orderId'].forEach(key => {",
+                  "  if (!pm.collectionVariables.get(key)) throw new Error(`Collection variable ${key} chưa được set`);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Token thuộc đúng test user', () => {",
+                  "  pm.expect(pm.response.json().user.email).to.equal(pm.collectionVariables.get('testEmail'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Kiểm tra khả năng chạy tuần tự bằng Newman, health và biến collection."
     }
-
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "adminEmail",
+      "value": "manager@edulearn.vn"
+    },
+    {
+      "key": "adminPassword",
+      "value": "admin123"
+    },
+    {
+      "key": "testRunId",
+      "value": ""
+    },
+    {
+      "key": "testEmail",
+      "value": ""
+    },
+    {
+      "key": "testPhone",
+      "value": ""
+    },
+    {
+      "key": "testPassword",
+      "value": "Pass123!@#"
+    },
+    {
+      "key": "courseId",
+      "value": "course-1"
+    },
+    {
+      "key": "courseTitle",
+      "value": ""
+    },
+    {
+      "key": "coursePrice",
+      "value": "0"
+    },
+    {
+      "key": "categoryId",
+      "value": "cat-1"
+    },
+    {
+      "key": "searchKeyword",
+      "value": ""
+    },
+    {
+      "key": "couponPercentCode",
+      "value": ""
+    },
+    {
+      "key": "couponFixedCode",
+      "value": ""
+    },
+    {
+      "key": "couponExpiredCode",
+      "value": ""
+    },
+    {
+      "key": "couponMinCode",
+      "value": ""
+    },
+    {
+      "key": "authToken",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    }
   ]
 }
