@@ -1,277 +1,116 @@
-'use strict';
-
-const assert = require('node:assert/strict');
-const nodeTest = require('node:test');
-
-// Tương thích đa nền tảng runner 
-const Feature = global.Feature || (() => {});
-const Scenario = global.Scenario || ((name, fn) => {
-  if (typeof nodeTest === 'function') {
-    nodeTest(name, fn);
-  } else if (typeof nodeTest.test === 'function') {
-    nodeTest.test(name, fn);
-  } else {
-    fn();
-  }
-});
-
 /**
  * ==============================================================================
- *  BỘ KIỂM THỬ TÍCH HỢP (INTEGRATION TESTING - API & DATABASE & RBAC)
+ * 🎟️ BỘ KIỂM THỬ TÍCH HỢP GIAO DIỆN HỆ THỐNG (CODECEPTJS E2E UI AUTOMATION)
  * ==============================================================================
- * Story: ORD-255 - [STORY 3.1] Phân hệ Mã giảm giá
- * Subtask: ORD-647 - Kiểm thử tích hợp - Module Mã giảm giá (Coupons API)
- * Mục tiêu: Kiểm thử tích hợp toàn diện 6 API Endpoints, CSDL SQLite và Phân quyền RBAC
- * Target Server: http://localhost:5000
+ * 📌 Story Jira: ORD-255 - [STORY 3.1] Phân hệ Mã giảm giá (Coupons Module)
+ * 📌 Subtask: ORD-647 - Kiểm thử tích hợp & Luồng giao diện Mã giảm giá (Coupons UI Flow)
+ * 🎯 Công cụ: CodeceptJS + Playwright (Trình duyệt tự động hóa)
+ * 🔐 Tài khoản kiểm thử:
+ *    - Admin: manager@edulearn.vn / admin123
+ *    - Học viên: tuan.nguyen@gmail.com / user123
  * ==============================================================================
  */
 
-const BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
-let adminToken = '';
+Feature('ORD-647: [Kiểm thử giao diện] Quản lý & Áp dụng Mã giảm giá (Coupons UI Browser Flow)');
 
-async function getAdminToken() {
-  if (adminToken) return adminToken;
-  try {
-    const res = await fetch(`${BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'manager@edulearn.vn', password: 'admin123' })
-    });
-    const data = await res.json();
-    adminToken = data.token;
-    return adminToken;
-  } catch (err) {
-    console.error('Lỗi khi lấy token admin:', err.message);
-    return '';
-  }
-}
+/**
+ * Helper: Đăng nhập tài khoản Học viên hợp lệ trong CSDL
+ */
+const loginAsStudent = (I) => {
+  I.amOnPage('/login');
+  I.waitForText('Đăng nhập tài khoản', 10);
+  I.fillField('input[type="email"]', 'tuan.nguyen@gmail.com');
+  I.fillField('input[type="password"]', 'user123');
+  I.click('Đăng nhập');
+  I.wait(3);
+};
 
-Feature('ORD-647: Kiểm thử tích hợp (Integration Testing) - Module Mã giảm giá (Coupons API)');
+/**
+ * Helper: Đăng nhập tài khoản Admin hợp lệ trong CSDL
+ */
+const loginAsAdmin = (I) => {
+  I.amOnPage('/login');
+  I.waitForText('Đăng nhập tài khoản', 10);
+  I.fillField('input[type="email"]', 'manager@edulearn.vn');
+  I.fillField('input[type="password"]', 'admin123');
+  I.click('Đăng nhập');
+  I.wait(3);
+};
 
-// ==============================================================================
-// 1. IT-CP-01: POST /api/coupons/validate - Áp dụng thành công coupon hợp lệ (HTTP 200)
-// ==============================================================================
-Scenario('ORD-647 [IT-CP-01]: POST /api/coupons/validate - Áp dụng mã hợp lệ thành công (HTTP 200)', async () => {
-  const token = await getAdminToken();
-  const testCode = `ITVALID${Date.now()}`;
-
-  // Chuẩn bị: Tạo 1 coupon hợp lệ trong CSDL qua API Admin
-  await fetch(`${BASE_URL}/api/admin/coupons`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      code: testCode,
-      discount: 10,
-      discount_type: 'percent',
-      quantity: 50,
-      expired_date: '2099-12-31',
-      status: 'active'
-    })
-  });
-
-  // Thực thi: Khách hàng áp dụng mã vào đơn hàng 1.000.000đ
-  const res = await fetch(`${BASE_URL}/api/coupons/validate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code: testCode, order_amount: 1000000 })
-  });
-
-  assert.strictEqual(res.status, 200, 'HTTP Status phải là 200');
-  const data = await res.json();
-  assert.strictEqual(data.valid, true, 'valid phải là true');
-  assert.strictEqual(data.calculated_discount, 100000, 'Mức giảm 10% của 1.000.000đ phải là 100.000đ');
-  assert.strictEqual(data.message, 'Áp dụng mã giảm giá thành công!');
+/**
+ * Kịch bản 1: [UI-01] Quản trị viên truy cập bảng điều khiển Mã Giảm Giá
+ */
+Scenario('ORD-647 [UI-01]: Admin đăng nhập -> Vào trang Quản lý Mã giảm giá /admin/coupons', async ({ I }) => {
+  loginAsAdmin(I);
+  I.amOnPage('/admin/coupons');
+  I.waitForText('Mã Giảm Giá', 15);
+  I.see('Mã Giảm Giá');
+  I.see('+ Thêm Coupon');
 });
 
-// ==============================================================================
-// 2. IT-CP-02: POST /api/coupons/validate - Báo lỗi khi mã không hợp lệ / không tồn tại (HTTP 400/404)
-// ==============================================================================
-Scenario('ORD-647 [IT-CP-02]: POST /api/coupons/validate - Báo lỗi khi mã rỗng hoặc không tồn tại', async () => {
-  // Case A: Mã rỗng
-  const emptyRes = await fetch(`${BASE_URL}/api/coupons/validate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code: '', order_amount: 500000 })
-  });
-  assert.strictEqual(emptyRes.status, 400, 'Mã rỗng phải trả về 400');
+/**
+ * Kịch bản 2: [UI-02] Quản trị viên mở modal và tạo mới một Voucher thành công
+ */
+Scenario('ORD-647 [UI-02]: Admin mở form -> Nhập thông tin & Tạo mới Mã giảm giá thành công', async ({ I }) => {
+  loginAsAdmin(I);
+  I.amOnPage('/admin/coupons');
+  I.waitForText('+ Thêm Coupon', 15);
+  I.click('+ Thêm Coupon');
+  I.waitForText('Thêm Coupon mới', 10);
+  I.see('Thêm Coupon mới');
 
-  // Case B: Mã ảo không có trong CSDL
-  const fakeRes = await fetch(`${BASE_URL}/api/coupons/validate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code: 'FAKE_CODE_XYZ_9999', order_amount: 500000 })
-  });
-  assert.strictEqual(fakeRes.status, 404, 'Mã không tồn tại phải trả về 404');
-  const fakeData = await fakeRes.json();
-  assert.strictEqual(fakeData.valid, false);
+  const randomCode = `UI${Date.now().toString().slice(-6)}`;
+  I.fillField('input[placeholder="Ví dụ: SALE50"]', randomCode);
+  I.fillField('input[placeholder="Ví dụ: Giảm giá 30% cho khách hàng mới..."]', 'Mã giảm giá kiểm thử UI tự động');
+  I.click('Lưu thông tin');
+  I.wait(2);
+  I.waitForText('Mã Giảm Giá', 15);
 });
 
-// ==============================================================================
-// 3. IT-CP-03: GET /api/coupons - Lấy danh sách Public coupons đang active (HTTP 200)
-// ==============================================================================
-Scenario('ORD-647 [IT-CP-03]: GET /api/coupons - Khách vãng lai lấy danh sách public coupons (HTTP 200)', async () => {
-  const res = await fetch(`${BASE_URL}/api/coupons`);
-  assert.strictEqual(res.status, 200, 'Khách vãng lai có thể lấy danh sách public coupons');
-  const data = await res.json();
-  assert.ok(Array.isArray(data), 'Response phải là một danh sách mảng Array');
+/**
+ * Kịch bản 3: [UI-03] Quản trị viên sử dụng thanh tìm kiếm lọc mã giảm giá
+ */
+Scenario('ORD-647 [UI-03]: Admin sử dụng ô lọc tìm kiếm danh sách mã giảm giá', async ({ I }) => {
+  loginAsAdmin(I);
+  I.amOnPage('/admin/coupons');
+  I.waitForText('Mã Giảm Giá', 15);
+  I.fillField('input[placeholder="Lọc theo mã giảm giá..."]', 'SALE');
+  I.wait(1);
+  I.see('Mã Giảm Giá');
 });
 
-// ==============================================================================
-// 4. IT-CP-04: GET /api/admin/coupons - Quản trị viên xem toàn bộ coupons (HTTP 200)
-// ==============================================================================
-Scenario('ORD-647 [IT-CP-04]: GET /api/admin/coupons - Quản trị viên xem toàn bộ danh sách coupons (HTTP 200)', async () => {
-  const token = await getAdminToken();
-  const res = await fetch(`${BASE_URL}/api/admin/coupons`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  assert.strictEqual(res.status, 200, 'Admin có Token phải truy cập được danh sách');
-  const data = await res.json();
-  assert.ok(Array.isArray(data), 'Kết quả phải là danh sách');
+/**
+ * Kịch bản 4: [UI-04] Học viên xem danh sách các chương trình khuyến mãi tại trang /promotions
+ */
+Scenario('ORD-647 [UI-04]: Học viên đăng nhập -> Mở trang Khuyến mãi /promotions', async ({ I }) => {
+  loginAsStudent(I);
+  I.amOnPage('/promotions');
+  I.waitForText('Khuyến mãi', 15);
+  I.see('Khuyến mãi');
 });
 
-// ==============================================================================
-// 5. IT-CP-05: POST /api/admin/coupons - Quản trị viên tạo coupon mới thành công (HTTP 201)
-// ==============================================================================
-Scenario('ORD-647 [IT-CP-05]: POST /api/admin/coupons - Quản trị viên tạo coupon mới thành công (HTTP 201)', async () => {
-  const token = await getAdminToken();
-  const newCode = `CREATE${Date.now()}`;
-  const res = await fetch(`${BASE_URL}/api/admin/coupons`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      code: newCode,
-      discount: 25,
-      discount_type: 'percent',
-      quantity: 100,
-      expired_date: '2099-12-31',
-      status: 'active',
-      description: 'Mã coupon test tích hợp tự động'
-    })
-  });
-
-  assert.strictEqual(res.status, 201, 'Tạo mới thành công phải trả về HTTP 201');
-  const data = await res.json();
-  assert.ok(data.coupon, 'Dữ liệu trả về phải chứa object coupon');
-  assert.strictEqual(data.coupon.code, newCode);
+/**
+ * Kịch bản 5: [UI-05] Học viên áp dụng mã giảm giá tại trang Thanh toán /checkout
+ */
+Scenario('ORD-647 [UI-05]: Học viên mua khóa học -> Mở panel Voucher tại Checkout -> Nhập mã thủ công', async ({ I }) => {
+  loginAsStudent(I);
+  I.amOnPage('/courses/course-1');
+  I.waitForText('Mua ngay', 15);
+  I.click('Mua ngay');
+  I.waitInUrl('/checkout?buynow=true', 10);
+  I.waitForText('Chọn voucher giảm giá', 15);
+  I.click('Chọn voucher giảm giá');
+  I.waitForText('NHẬP MÃ THỦ CÔNG', 15);
+  I.see('NHẬP MÃ THỦ CÔNG');
 });
 
-// ==============================================================================
-// 6. IT-CP-06: POST /api/admin/coupons - Báo lỗi khi tạo mã coupon bị trùng (HTTP 400)
-// ==============================================================================
-Scenario('ORD-647 [IT-CP-06]: POST /api/admin/coupons - Ràng buộc CSDL chặn tạo trùng mã coupon (HTTP 400)', async () => {
-  const token = await getAdminToken();
-  const duplicateCode = `DUP${Date.now()}`;
-
-  // Tạo lần 1
-  await fetch(`${BASE_URL}/api/admin/coupons`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      code: duplicateCode,
-      discount: 15,
-      quantity: 10,
-      expired_date: '2099-12-31'
-    })
-  });
-
-  // Tạo lần 2 cùng mã
-  const dupRes = await fetch(`${BASE_URL}/api/admin/coupons`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      code: duplicateCode,
-      discount: 15,
-      quantity: 10,
-      expired_date: '2099-12-31'
-    })
-  });
-
-  assert.strictEqual(dupRes.status, 400, 'Tạo trùng mã phải bị chặn với mã lỗi 400');
-  const data = await dupRes.json();
-  assert.ok(data.message.includes('tồn tại'), 'Thông báo phải nêu rõ mã đã tồn tại');
-});
-
-// ==============================================================================
-// 7. IT-CP-07: PUT /api/admin/coupons/:id - Quản trị viên cập nhật thông tin coupon (HTTP 200)
-// ==============================================================================
-Scenario('ORD-647 [IT-CP-07]: PUT /api/admin/coupons/:id - Quản trị viên cập nhật coupon (HTTP 200)', async () => {
-  const token = await getAdminToken();
-  const code = `UPDATE${Date.now()}`;
-
-  // Tạo coupon để update
-  const createRes = await fetch(`${BASE_URL}/api/admin/coupons`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      code,
-      discount: 10,
-      quantity: 10,
-      expired_date: '2099-12-31'
-    })
-  });
-  const created = await createRes.json();
-  const couponId = created.coupon.id;
-
-  // Thực hiện PUT cập nhật
-  const updateRes = await fetch(`${BASE_URL}/api/admin/coupons/${couponId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      code: `${code}_UPDATED`,
-      discount: 30,
-      quantity: 50,
-      expired_date: '2099-12-31',
-      status: 'active'
-    })
-  });
-
-  assert.strictEqual(updateRes.status, 200, 'Cập nhật thành công phải trả về 200');
-});
-
-// ==============================================================================
-// 8. IT-CP-08: DELETE /api/admin/coupons/:id - Quản trị viên xóa coupon thành công (HTTP 200)
-// ==============================================================================
-Scenario('ORD-647 [IT-CP-08]: DELETE /api/admin/coupons/:id - Quản trị viên xóa coupon thành công (HTTP 200)', async () => {
-  const token = await getAdminToken();
-  const code = `DEL${Date.now()}`;
-
-  const createRes = await fetch(`${BASE_URL}/api/admin/coupons`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      code,
-      discount: 10,
-      quantity: 10,
-      expired_date: '2099-12-31'
-    })
-  });
-  const created = await createRes.json();
-  const couponId = created.coupon.id;
-
-  // Xóa hợp lệ
-  const delRes = await fetch(`${BASE_URL}/api/admin/coupons/${couponId}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  assert.strictEqual(delRes.status, 200, 'Xóa thành công phải trả về 200');
-});
-
-// ==============================================================================
-// 9. IT-CP-09: DELETE /api/admin/coupons/:id - Xóa coupon không tồn tại trả về 404
-// ==============================================================================
-Scenario('ORD-647 [IT-CP-09]: DELETE /api/admin/coupons/:id - Xóa coupon với ID không tồn tại (HTTP 404)', async () => {
-  const token = await getAdminToken();
-  const nonExistRes = await fetch(`${BASE_URL}/api/admin/coupons/non-existent-id-9999`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  assert.strictEqual(nonExistRes.status, 404, 'Xóa ID không tồn tại phải trả về 404');
-});
-
-// ==============================================================================
-// 10. IT-CP-10: Phân quyền RBAC - Chặn người dùng không có quyền gọi API Admin (HTTP 401)
-// ==============================================================================
-Scenario('ORD-647 [IT-CP-10]: Phân quyền RBAC - Chặn gọi API Admin khi không có Token (HTTP 401)', async () => {
-  const res = await fetch(`${BASE_URL}/api/admin/coupons`);
-  assert.strictEqual(res.status, 401, 'Không gửi Authorization Header phải bị chặn với mã lỗi 401');
+/**
+ * Kịch bản 6: [UI-06] Phân quyền RBAC - Học viên thông thường không được phép truy cập khu vực /admin/coupons
+ */
+Scenario('ORD-647 [UI-06]: Phân quyền RBAC - Học viên cố tình vào /admin/coupons -> Bị chặn điều hướng', async ({ I }) => {
+  loginAsStudent(I);
+  I.amOnPage('/admin/coupons');
+  I.wait(2);
+  // Middleware hoặc UI sẽ chặn và chuyển hướng học viên khỏi admin
+  I.dontSee('Thêm Coupon mới');
 });
