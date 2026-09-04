@@ -24,7 +24,7 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
       return callback(null, true);
     }
-    return callback(null, true);
+    return callback(new Error('CORS blocked: Origin not allowed by CORS policy'));
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
