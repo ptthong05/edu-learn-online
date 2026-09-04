@@ -1730,7 +1730,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "['baseUrl', 'authToken', 'adminToken', 'testEmail', 'courseId', 'orderId'].forEach(key => {",
-                  "  if (!pm.collectionVariables.get(key)) throw new Error(`Collection variable ${key} chưa được set`);",
+                  "  const value = pm.collectionVariables.get(key) || pm.environment.get(key);",
+                  "  if (!value) throw new Error(`Variable ${key} chưa được set`);",
                   "});"
                 ]
               }
@@ -1742,7 +1743,8 @@
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "pm.test('Token thuộc đúng test user', () => {",
-                  "  pm.expect(pm.response.json().user.email).to.equal(pm.collectionVariables.get('testEmail'));",
+                  "  const expectedEmail = pm.collectionVariables.get('testEmail') || pm.environment.get('testEmail');",
+                  "  pm.expect(pm.response.json().user.email).to.equal(expectedEmail);",
                   "});"
                 ]
               }
@@ -1772,7 +1774,7 @@
           "response": []
         }
       ],
-      "description": "Kiểm tra khả năng chạy tuần tự bằng Newman, health và biến collection."
+      "description": "Kiểm tra khả năng chạy tuần tự bằng Newman, health và biến collection/environment."
     }
   ],
   "variable": [
@@ -1850,3 +1852,4 @@
     }
   ]
 }
+
