@@ -38,10 +38,95 @@ async function initDatabase() {
   `);
 
   // Keep existing local databases compatible with the phone field.
-  const userColumns = await database.all('PRAGMA table_info(users)');
-  if (!userColumns.some(column => column.name === 'phone')) {
-    await database.exec('ALTER TABLE users ADD COLUMN phone TEXT');
+  // ===== FIX ORD-334: migrate CHECK constraints for users.role/status =====
+const usersSchema = await database.get(
+  "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'"
+);
+
+if (
+  usersSchema &&
+  usersSchema.sql &&
+  (
+    !/role\s+TEXT\s+NOT\s+NULL\s+DEFAULT\s+'USER'\s+CHECK\s*\(\s*role\s+IN\s*\('USER',\s*'MANAGER',\s*'STAFF',\s*'AFFILIATE'\)\s*\)/i.test(usersSchema.sql) ||
+    !/status\s+TEXT\s+NOT\s+NULL\s+DEFAULT\s+'active'\s+CHECK\s*\(\s*status\s+IN\s*\('active',\s*'blocked'\)\s*\)/i.test(usersSchema.sql)
+  )
+) {
+  console.log('Migrating users table: add CHECK constraints for role/status...');
+
+  await database.exec('PRAGMA foreign_keys = OFF');
+
+  try {
+    await database.exec('BEGIN TRANSACTION');
+
+    await database.exec(`
+      CREATE TABLE users_new (
+        id TEXT PRIMARY KEY,
+        full_name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        phone TEXT,
+        password TEXT NOT NULL,
+        avatar TEXT,
+        role TEXT NOT NULL DEFAULT 'USER'
+          CHECK (role IN ('USER', 'MANAGER', 'STAFF', 'AFFILIATE')),
+        status TEXT NOT NULL DEFAULT 'active'
+          CHECK (status IN ('active', 'blocked')),
+        must_change_password INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL
+      )
+    `);
+
+    await database.exec(`
+      INSERT INTO users_new (
+        id,
+        full_name,
+        email,
+        phone,
+        password,
+        avatar,
+        role,
+        status,
+        must_change_password,
+        created_at
+      )
+      SELECT
+        id,
+        full_name,
+        email,
+        phone,
+        password,
+        avatar,
+        CASE
+          WHEN role IN ('USER', 'MANAGER', 'STAFF', 'AFFILIATE') THEN role
+          ELSE 'USER'
+        END,
+        CASE
+          WHEN status IN ('active', 'blocked') THEN status
+          ELSE 'active'
+        END,
+        must_change_password,
+        created_at
+      FROM users
+    `);
+
+    await database.exec('DROP TABLE users');
+    await database.exec('ALTER TABLE users_new RENAME TO users');
+
+    await database.exec('COMMIT');
+
+    console.log(
+      'Migration completed: users.role/status CHECK constraints applied.'
+    );
+  } catch (error) {
+    try {
+      await database.exec('ROLLBACK');
+    } catch (_) {}
+
+    throw error;
+  } finally {
+    await database.exec('PRAGMA foreign_keys = ON');
   }
+}
+// ===== END FIX ORD-334 =====
 
   // Create password reset tokens table
   await database.exec(`
@@ -99,10 +184,123 @@ async function initDatabase() {
   `);
 
   // Create Indexes for Courses Table
-  await database.exec(`
-    CREATE INDEX IF NOT EXISTS idx_courses_category_id ON courses (category_id);
-    CREATE INDEX IF NOT EXISTS idx_courses_status ON courses (status);
-  `);
+  // Migration: đảm bảo courses.price có CHECK (price >= 0)
+// SQLite không hỗ trợ ALTER COLUMN để thêm CHECK,
+// nên cần rebuild bảng nếu database cũ chưa có constraint.
+const coursesSchema = await database.get(
+  "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'courses'"
+);
+
+if (
+  coursesSchema &&
+  coursesSchema.sql &&
+  !/price\s+INTEGER\s+NOT\s+NULL\s+CHECK\s*\(\s*price\s*>=\s*0\s*\)/i.test(coursesSchema.sql)
+) {
+  console.log('Migrating courses table: add CHECK (price >= 0)...');
+
+  await database.exec('PRAGMA foreign_keys = OFF');
+
+  try {
+    await database.exec('BEGIN TRANSACTION');
+
+    await database.exec(`
+      CREATE TABLE courses_new (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        image TEXT,
+        video_intro TEXT,
+        price INTEGER NOT NULL CHECK (price >= 0),
+        sale_price INTEGER CHECK (
+          sale_price IS NULL OR
+          (sale_price >= 0 AND sale_price <= price)
+        ),
+        category_id TEXT,
+        instructor TEXT,
+        status TEXT DEFAULT 'published'
+          CHECK (status IN ('published', 'draft', 'hidden')),
+        content_html TEXT DEFAULT '',
+        highlights TEXT DEFAULT '[]',
+        curriculum TEXT DEFAULT '[]',
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (category_id)
+          REFERENCES categories (id)
+          ON DELETE SET NULL
+      )
+    `);
+
+    // Nếu database cũ đã chứa giá âm thì không thể copy trực tiếp.
+    // Chuẩn hóa về 0 để dữ liệu hiện tại không phá migration.
+    await database.exec(`
+      INSERT INTO courses_new (
+        id,
+        title,
+        description,
+        image,
+        video_intro,
+        price,
+        sale_price,
+        category_id,
+        instructor,
+        status,
+        content_html,
+        highlights,
+        curriculum,
+        created_at
+      )
+      SELECT
+        id,
+        title,
+        description,
+        image,
+        video_intro,
+        CASE
+          WHEN price < 0 THEN 0
+          ELSE price
+        END,
+        CASE
+          WHEN sale_price IS NULL THEN NULL
+          WHEN sale_price < 0 THEN 0
+          WHEN price < 0 THEN 0
+          WHEN sale_price > price THEN price
+          ELSE sale_price
+        END,
+        category_id,
+        instructor,
+        status,
+        COALESCE(content_html, ''),
+        COALESCE(highlights, '[]'),
+        COALESCE(curriculum, '[]'),
+        created_at
+      FROM courses
+    `);
+
+    await database.exec('DROP TABLE courses');
+    await database.exec('ALTER TABLE courses_new RENAME TO courses');
+
+    await database.exec(`
+      CREATE INDEX IF NOT EXISTS idx_courses_category_id
+      ON courses (category_id);
+
+      CREATE INDEX IF NOT EXISTS idx_courses_status
+      ON courses (status);
+    `);
+
+    await database.exec('COMMIT');
+
+    console.log(
+      'Migration completed: courses.price now has CHECK (price >= 0).'
+    );
+  } catch (error) {
+    try {
+      await database.exec('ROLLBACK');
+    } catch (_) {}
+
+    throw error;
+  } finally {
+    await database.exec('PRAGMA foreign_keys = ON');
+  }
+}
 
   try {
     await database.exec(`ALTER TABLE courses ADD COLUMN content_html TEXT DEFAULT ''`);
