@@ -1,0 +1,65 @@
+{
+  "info": {
+    "name": "ORD-590 - Auth Me / Profile",
+    "_postman_id": "ord-590-auth-me",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "ORD-590 - GET /users/profile - Current user schema",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/profile",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "profile"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Response có user object', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json).to.have.property('user');",
+              "  pm.expect(json.user).to.be.an('object');",
+              "});",
+              "pm.test('User schema hợp lệ', () => {",
+              "  const user = pm.response.json().user;",
+              "  pm.expect(user).to.have.property('id');",
+              "  pm.expect(user).to.have.property('email');",
+              "  pm.expect(user).to.have.property('full_name');",
+              "  pm.expect(user).to.have.property('role');",
+              "});",
+              "pm.test('Không trả password', () => {",
+              "  const user = pm.response.json().user;",
+              "  pm.expect(user).to.not.have.property('password');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    }
+  ]
+}
