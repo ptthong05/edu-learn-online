@@ -73,7 +73,14 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: 'EduLearn API is healthy' });
 });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'edulearn_super_secret_key_123!@#';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error(
+    'JWT_SECRET is required. Configure JWT_SECRET in the environment before starting the backend.'
+  );
+  process.exit(1);
+}
 
 function parseCourseHighlights(value) {
   if (Array.isArray(value)) return value.filter(item => typeof item === 'string' && item.trim());

@@ -2,6 +2,13 @@
 
 const jwt = require('jsonwebtoken');
 const { getDatabase } = require('./db');
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error(
+    'JWT_SECRET is required. Configure JWT_SECRET in the environment before starting the backend.'
+  );
+}
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -14,8 +21,8 @@ function authenticateToken(req, res, next) {
   }
 
   jwt.verify(
-    token,
-    process.env.JWT_SECRET || 'edulearn_super_secret_key_123!@#',
+  token,
+  JWT_SECRET,
     (err, user) => {
       if (err) {
         return res.status(403).json({
@@ -40,9 +47,9 @@ async function checkUserStatus(req, res, next) {
     const db = await getDatabase();
 
     const currentUser = await db.get(
-      'SELECT id, status FROM users WHERE id = ?',
-      [req.user.id]
-    );
+  'SELECT id, status, role FROM users WHERE id = ?',
+  [req.user.id]
+);
 
     if (!currentUser) {
       return res.status(403).json({
@@ -58,6 +65,7 @@ async function checkUserStatus(req, res, next) {
     }
 
     req.user.status = currentUser.status;
+req.user.role = currentUser.role;
 
     return next();
   } catch (error) {
