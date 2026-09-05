@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="EduLearnOnline API Testing Collection v3" tests="7" time="0.169">
+  <testsuite name="4. Orders API (ORD-328) / 4.1 [Happy] POST /orders - Tạo đơn hàng" id="c1b71813-6170-49b0-a7f6-37feced58cad" timestamp="2026-09-03T01:01:42.350Z" tests="3" failures="0" errors="0" time="0.068">
+    <testcase name="Status 201 Created" time="0.068" classname="4OrdersApiOrd32841HappyPostOrdersToDnHang"/>
+    <testcase name="Response có orderId" time="0.068" classname="4OrdersApiOrd32841HappyPostOrdersToDnHang"/>
+    <testcase name="Có message đặt hàng thành công" time="0.068" classname="4OrdersApiOrd32841HappyPostOrdersToDnHang"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.2 [Auth] POST /orders - Không có token" id="e7e23fbf-5a5a-462d-8679-7bd041990c6a" timestamp="2026-09-03T01:01:42.350Z" tests="2" failures="0" errors="0" time="0.008">
+    <testcase name="Status 401 Unauthorized" time="0.008" classname="4OrdersApiOrd32842AuthPostOrdersKhongCoToken"/>
+    <testcase name="Không có orderId" time="0.008" classname="4OrdersApiOrd32842AuthPostOrdersKhongCoToken"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.3 [Negative] POST /orders - Giỏ hàng rỗng" id="e08195c5-c836-4cd3-9a3c-8939f4f654df" timestamp="2026-09-03T01:01:42.350Z" tests="2" failures="0" errors="0" time="0.006">
+    <testcase name="Status 400 Bad Request" time="0.006" classname="4OrdersApiOrd32843NegativePostOrdersGiHangRng"/>
+    <testcase name="Có message giỏ hàng trống" time="0.006" classname="4OrdersApiOrd32843NegativePostOrdersGiHangRng"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.4 [Happy] GET /orders - Danh sách đơn của user" id="6ce28a9b-0844-4600-b0a0-dcb2d98c9096" timestamp="2026-09-03T01:01:42.350Z" tests="3" failures="0" errors="0" time="0.012">
+    <testcase name="Status 200 OK" time="0.012" classname="4OrdersApiOrd32844HappyGetOrdersDanhSachDnCaUser"/>
+    <testcase name="Response là array" time="0.012" classname="4OrdersApiOrd32844HappyGetOrdersDanhSachDnCaUser"/>
+    <testcase name="Danh sách chứa đơn vừa tạo" time="0.012" classname="4OrdersApiOrd32844HappyGetOrdersDanhSachDnCaUser"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.5 [Happy] GET /orders/:id - Chi tiết đơn hàng" id="6d3f1506-d800-408e-89ac-c647edae4f86" timestamp="2026-09-03T01:01:42.350Z" tests="2" failures="0" errors="0" time="0.015">
+    <testcase name="Status 200 OK" time="0.015" classname="4OrdersApiOrd32845HappyGetOrdersIdChiTitDnHang"/>
+    <testcase name="Đúng orderId và có items" time="0.015" classname="4OrdersApiOrd32845HappyGetOrdersIdChiTitDnHang"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.6 [Upload] POST /orders/upload-proof - Bằng chứng thanh toán" id="0417485e-e62c-4fe4-928d-552202e9f5d7" timestamp="2026-09-03T01:01:42.350Z" tests="2" failures="0" errors="0" time="0.020">
+    <testcase name="Status 200 OK" time="0.020" classname="4OrdersApiOrd32846UploadPostOrdersUploadProofBngChngThanhToan"/>
+    <testcase name="Có message tải proof thành công" time="0.020" classname="4OrdersApiOrd32846UploadPostOrdersUploadProofBngChngThanhToan"/>
+  </testsuite>
+  <testsuite name="4. Orders API (ORD-328) / 4.7 [Admin] PUT /admin/orders/:id/status - Hoàn tất đơn" id="70e55162-abc9-4b22-8e53-d05b6508b844" timestamp="2026-09-03T01:01:42.350Z" tests="2" failures="0" errors="0" time="0.040">
+    <testcase name="Status 200 OK" time="0.040" classname="4OrdersApiOrd32847AdminPutAdminOrdersIdStatusHoanTtDn"/>
+    <testcase name="Status trả về là completed" time="0.040" classname="4OrdersApiOrd32847AdminPutAdminOrdersIdStatusHoanTtDn"/>
+  </testsuite>
+</testsuites>

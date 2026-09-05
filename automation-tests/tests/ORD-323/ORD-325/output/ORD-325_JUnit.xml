@@ -1,42 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="EduLearnOnline API Testing Collection v3" tests="8" time="0.425">
-  <testsuite name="1. Authentication (ORD-325) / 1.1 [Happy] POST /auth/register - Đăng ký thành công" id="a1568a13-889c-41bc-a9a5-0657875e75f0" timestamp="2026-09-02T16:03:25.817Z" tests="6" failures="0" errors="0" time="0.141">
-    <testcase name="TC-01 - Status 201 Created" time="0.141" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
-    <testcase name="TC-01 - Response time dưới 2000ms" time="0.141" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
-    <testcase name="TC-01 - Có thông báo tạo tài khoản thành công" time="0.141" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
-    <testcase name="TC-01 - Không làm lộ password" time="0.141" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
-    <testcase name="TC-01 - Register không trả JWT token" time="0.141" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
-    <testcase name="TC-01 - Register không trả user object" time="0.141" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
+<testsuites name="EduLearnOnline API Testing Collection v3" tests="8" time="0.410">
+  <testsuite name="1. Authentication (ORD-325) / 1.1 [Happy] POST /auth/register - Đăng ký thành công" id="516b0380-749f-43c6-b057-280ea9561842" timestamp="2026-09-03T00:24:04.231Z" tests="6" failures="0" errors="0" time="0.159">
+    <testcase name="TC-01 - Status 201 Created" time="0.159" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
+    <testcase name="TC-01 - Response time dưới 2000ms" time="0.159" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
+    <testcase name="TC-01 - Có thông báo tạo tài khoản thành công" time="0.159" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
+    <testcase name="TC-01 - Không làm lộ password" time="0.159" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
+    <testcase name="TC-01 - Register không trả JWT token" time="0.159" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
+    <testcase name="TC-01 - Register không trả user object" time="0.159" classname="1AuthenticationOrd32511HappyPostAuthRegisterDangKyThanhCong"/>
   </testsuite>
-  <testsuite name="1. Authentication (ORD-325) / 1.2 [Negative] POST /auth/register - Email đã tồn tại" id="99f060bf-0863-4b63-b886-e2c23b7f813d" timestamp="2026-09-02T16:03:25.817Z" tests="2" failures="0" errors="0" time="0.007">
+  <testsuite name="1. Authentication (ORD-325) / 1.2 [Negative] POST /auth/register - Email đã tồn tại" id="5eeaf727-190a-47ac-9cee-b0debaed7db3" timestamp="2026-09-03T00:24:04.231Z" tests="2" failures="0" errors="0" time="0.007">
     <testcase name="Status 400 khi email đã tồn tại" time="0.007" classname="1AuthenticationOrd32512NegativePostAuthRegisterEmailDaTnTi"/>
     <testcase name="Có message lỗi và không có token" time="0.007" classname="1AuthenticationOrd32512NegativePostAuthRegisterEmailDaTnTi"/>
   </testsuite>
-  <testsuite name="1. Authentication (ORD-325) / 1.3 [Negative] POST /auth/register - Thiếu email bắt buộc" id="b4f4d57b-f90c-4050-8ce9-15f0cb2800dd" timestamp="2026-09-02T16:03:25.817Z" tests="2" failures="0" errors="0" time="0.007">
-    <testcase name="Status 400 Bad Request" time="0.007" classname="1AuthenticationOrd32513NegativePostAuthRegisterThiuEmailBtBuc"/>
-    <testcase name="Có message validation" time="0.007" classname="1AuthenticationOrd32513NegativePostAuthRegisterThiuEmailBtBuc"/>
+  <testsuite name="1. Authentication (ORD-325) / 1.3 [Negative] POST /auth/register - Thiếu email bắt buộc" id="58b4fc6c-fd56-4793-ab9a-4e0f95228f86" timestamp="2026-09-03T00:24:04.231Z" tests="2" failures="0" errors="0" time="0.008">
+    <testcase name="Status 400 Bad Request" time="0.008" classname="1AuthenticationOrd32513NegativePostAuthRegisterThiuEmailBtBuc"/>
+    <testcase name="Có message validation" time="0.008" classname="1AuthenticationOrd32513NegativePostAuthRegisterThiuEmailBtBuc"/>
   </testsuite>
-  <testsuite name="1. Authentication (ORD-325) / 1.4 [Happy] POST /auth/login - Đăng nhập và tạo token" id="aa51cf89-b1cd-4124-bcab-fef7c9949357" timestamp="2026-09-02T16:03:25.817Z" tests="4" failures="0" errors="0" time="0.112">
-    <testcase name="Status 200 OK" time="0.112" classname="1AuthenticationOrd32514HappyPostAuthLoginDangNhpVaToToken"/>
-    <testcase name="Có JWT token hợp lệ" time="0.112" classname="1AuthenticationOrd32514HappyPostAuthLoginDangNhpVaToToken"/>
-    <testcase name="Đúng user vừa đăng ký" time="0.112" classname="1AuthenticationOrd32514HappyPostAuthLoginDangNhpVaToToken"/>
-    <testcase name="Thiết lập adminToken thành công" time="0.112" classname="1AuthenticationOrd32514HappyPostAuthLoginDangNhpVaToToken"/>
+  <testsuite name="1. Authentication (ORD-325) / 1.4 [Happy] POST /auth/login - Đăng nhập và tạo token" id="b787af2c-b9cb-4af5-9bbe-f4055b891a98" timestamp="2026-09-03T00:24:04.231Z" tests="4" failures="0" errors="0" time="0.114">
+    <testcase name="Status 200 OK" time="0.114" classname="1AuthenticationOrd32514HappyPostAuthLoginDangNhpVaToToken"/>
+    <testcase name="Có JWT token hợp lệ" time="0.114" classname="1AuthenticationOrd32514HappyPostAuthLoginDangNhpVaToToken"/>
+    <testcase name="Đúng user vừa đăng ký" time="0.114" classname="1AuthenticationOrd32514HappyPostAuthLoginDangNhpVaToToken"/>
+    <testcase name="Thiết lập adminToken thành công" time="0.114" classname="1AuthenticationOrd32514HappyPostAuthLoginDangNhpVaToToken"/>
   </testsuite>
-  <testsuite name="1. Authentication (ORD-325) / 1.5 [Negative] POST /auth/login - Sai mật khẩu" id="640898b0-4365-413e-9ba7-240670665cb9" timestamp="2026-09-02T16:03:25.817Z" tests="2" failures="0" errors="0" time="0.131">
-    <testcase name="Status 400 khi sai mật khẩu" time="0.131" classname="1AuthenticationOrd32515NegativePostAuthLoginSaiMtKhu"/>
-    <testcase name="Có message lỗi và không có token" time="0.131" classname="1AuthenticationOrd32515NegativePostAuthLoginSaiMtKhu"/>
+  <testsuite name="1. Authentication (ORD-325) / 1.5 [Negative] POST /auth/login - Sai mật khẩu" id="792835e5-4087-4121-8d9b-5938b04dc798" timestamp="2026-09-03T00:24:04.231Z" tests="2" failures="0" errors="0" time="0.104">
+    <testcase name="Status 400 khi sai mật khẩu" time="0.104" classname="1AuthenticationOrd32515NegativePostAuthLoginSaiMtKhu"/>
+    <testcase name="Có message lỗi và không có token" time="0.104" classname="1AuthenticationOrd32515NegativePostAuthLoginSaiMtKhu"/>
   </testsuite>
-  <testsuite name="1. Authentication (ORD-325) / 1.6 [Negative] POST /auth/login - Email không tồn tại" id="c67b698c-4988-404f-a390-45d36e022315" timestamp="2026-09-02T16:03:25.817Z" tests="2" failures="0" errors="0" time="0.006">
-    <testcase name="Status 400 khi tài khoản không tồn tại" time="0.006" classname="1AuthenticationOrd32516NegativePostAuthLoginEmailKhongTnTi"/>
-    <testcase name="Không trả token" time="0.006" classname="1AuthenticationOrd32516NegativePostAuthLoginEmailKhongTnTi"/>
+  <testsuite name="1. Authentication (ORD-325) / 1.6 [Negative] POST /auth/login - Email không tồn tại" id="20907e9d-3b9d-4cf3-a07d-7590880627f0" timestamp="2026-09-03T00:24:04.231Z" tests="2" failures="0" errors="0" time="0.007">
+    <testcase name="Status 400 khi tài khoản không tồn tại" time="0.007" classname="1AuthenticationOrd32516NegativePostAuthLoginEmailKhongTnTi"/>
+    <testcase name="Không trả token" time="0.007" classname="1AuthenticationOrd32516NegativePostAuthLoginEmailKhongTnTi"/>
   </testsuite>
-  <testsuite name="1. Authentication (ORD-325) / 1.7 [Happy] GET /users/profile - Hồ sơ hiện tại" id="11296eca-5fa8-408e-823a-06124e655362" timestamp="2026-09-02T16:03:25.817Z" tests="3" failures="0" errors="0" time="0.011">
-    <testcase name="Status 200 OK" time="0.011" classname="1AuthenticationOrd32517HappyGetUsersProfileHSHinTi"/>
-    <testcase name="Có user và đủ field chính" time="0.011" classname="1AuthenticationOrd32517HappyGetUsersProfileHSHinTi"/>
-    <testcase name="Email khớp tài khoản vừa tạo" time="0.011" classname="1AuthenticationOrd32517HappyGetUsersProfileHSHinTi"/>
+  <testsuite name="1. Authentication (ORD-325) / 1.7 [Happy] GET /users/profile - Hồ sơ hiện tại" id="84f7ae7f-daac-4b52-9aaf-36950a085e96" timestamp="2026-09-03T00:24:04.231Z" tests="3" failures="0" errors="0" time="0.007">
+    <testcase name="Status 200 OK" time="0.007" classname="1AuthenticationOrd32517HappyGetUsersProfileHSHinTi"/>
+    <testcase name="Có user và đủ field chính" time="0.007" classname="1AuthenticationOrd32517HappyGetUsersProfileHSHinTi"/>
+    <testcase name="Email khớp tài khoản vừa tạo" time="0.007" classname="1AuthenticationOrd32517HappyGetUsersProfileHSHinTi"/>
   </testsuite>
-  <testsuite name="1. Authentication (ORD-325) / 1.8 [Auth] GET /users/profile - Không có token" id="847e9d5e-1aa3-4c2b-8527-45b0ec34231e" timestamp="2026-09-02T16:03:25.817Z" tests="2" failures="0" errors="0" time="0.010">
-    <testcase name="Status 401 Unauthorized" time="0.010" classname="1AuthenticationOrd32518AuthGetUsersProfileKhongCoToken"/>
-    <testcase name="Có message unauthorized" time="0.010" classname="1AuthenticationOrd32518AuthGetUsersProfileKhongCoToken"/>
+  <testsuite name="1. Authentication (ORD-325) / 1.8 [Auth] GET /users/profile - Không có token" id="5c56f41a-f7ec-46e6-8af5-0479b2e53a01" timestamp="2026-09-03T00:24:04.231Z" tests="2" failures="0" errors="0" time="0.004">
+    <testcase name="Status 401 Unauthorized" time="0.004" classname="1AuthenticationOrd32518AuthGetUsersProfileKhongCoToken"/>
+    <testcase name="Có message unauthorized" time="0.004" classname="1AuthenticationOrd32518AuthGetUsersProfileKhongCoToken"/>
   </testsuite>
 </testsuites>

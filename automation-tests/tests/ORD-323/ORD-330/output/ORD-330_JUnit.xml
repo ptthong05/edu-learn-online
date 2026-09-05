@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="EduLearnOnline API Testing Collection v3" tests="3" time="0.190">
+  <testsuite name="6. Automation - Newman &amp; Environment (ORD-330) / 6.1 [Runner] POST /auth/login - Auto login lại" id="38e9d153-5470-4ea5-ba73-42486ca5524d" timestamp="2026-09-04T00:38:11.925Z" tests="2" failures="0" errors="0" time="0.165">
+    <testcase name="Auto-login status 200" time="0.165" classname="6AutomationNewmanAmpEnvironmentOrd33061RunnerPostAuthLoginAutoLoginLi"/>
+    <testcase name="Cập nhật authToken thành công" time="0.165" classname="6AutomationNewmanAmpEnvironmentOrd33061RunnerPostAuthLoginAutoLoginLi"/>
+  </testsuite>
+  <testsuite name="6. Automation - Newman &amp; Environment (ORD-330) / 6.2 [Health] GET /api/health - Backend sẵn sàng" id="25219126-d2aa-4ec7-b5a8-d486d2bf05e9" timestamp="2026-09-04T00:38:11.925Z" tests="3" failures="0" errors="0" time="0.011">
+    <testcase name="Status 200 OK" time="0.011" classname="6AutomationNewmanAmpEnvironmentOrd33062HealthGetApiHealthBackendSnSang"/>
+    <testcase name="Health status=ok" time="0.011" classname="6AutomationNewmanAmpEnvironmentOrd33062HealthGetApiHealthBackendSnSang"/>
+    <testcase name="Response time dưới 1000 ms" time="0.011" classname="6AutomationNewmanAmpEnvironmentOrd33062HealthGetApiHealthBackendSnSang"/>
+  </testsuite>
+  <testsuite name="6. Automation - Newman &amp; Environment (ORD-330) / 6.3 [Environment] GET /users/profile - Xác minh biến" id="527fd650-14cf-4184-875f-6ab0d7cae258" timestamp="2026-09-04T00:38:11.925Z" tests="2" failures="0" errors="0" time="0.014">
+    <testcase name="Status 200 OK" time="0.014" classname="6AutomationNewmanAmpEnvironmentOrd33063EnvironmentGetUsersProfileXacMinhBin"/>
+    <testcase name="Token thuộc đúng test user" time="0.014" classname="6AutomationNewmanAmpEnvironmentOrd33063EnvironmentGetUsersProfileXacMinhBin"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="ORD-590 - Auth Me / Profile" tests="1" time="0.056">
+  <testsuite name="ORD-590 - GET /users/profile - Current user schema" id="74ce3328-a28f-4dd1-ac36-01b2a5e3e28d" timestamp="2026-09-04T00:53:33.440Z" tests="4" failures="0" errors="0" time="0.056">
+    <testcase name="Status 200 OK" time="0.056" classname="Ord590GetUsersProfileCurrentUserSchema"/>
+    <testcase name="Response có user object" time="0.056" classname="Ord590GetUsersProfileCurrentUserSchema"/>
+    <testcase name="User schema hợp lệ" time="0.056" classname="Ord590GetUsersProfileCurrentUserSchema"/>
+    <testcase name="Không trả password" time="0.056" classname="Ord590GetUsersProfileCurrentUserSchema"/>
+  </testsuite>
+</testsuites>

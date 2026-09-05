@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="EduLearnOnline API Testing Collection v3" tests="6" time="0.129">
+  <testsuite name="5. Affiliate Marketing (ORD-329) / 5.1 [Happy] GET /affiliates/status - User chưa đăng ký CTV" id="487040d4-45a6-421c-8372-02ff18c3349e" timestamp="2026-09-03T01:10:03.914Z" tests="2" failures="0" errors="0" time="0.061">
+    <testcase name="Status 200 OK" time="0.061" classname="5AffiliateMarketingOrd32951HappyGetAffiliatesStatusUserChaDangKyCtv"/>
+    <testcase name="registered=false trước khi đăng ký" time="0.061" classname="5AffiliateMarketingOrd32951HappyGetAffiliatesStatusUserChaDangKyCtv"/>
+  </testsuite>
+  <testsuite name="5. Affiliate Marketing (ORD-329) / 5.2 [Auth] GET /affiliates/status - Không có token" id="3a2fa277-62bc-4097-a2fc-51c65f414c77" timestamp="2026-09-03T01:10:03.914Z" tests="2" failures="0" errors="0" time="0.008">
+    <testcase name="Status 401 Unauthorized" time="0.008" classname="5AffiliateMarketingOrd32952AuthGetAffiliatesStatusKhongCoToken"/>
+    <testcase name="Có message unauthorized" time="0.008" classname="5AffiliateMarketingOrd32952AuthGetAffiliatesStatusKhongCoToken"/>
+  </testsuite>
+  <testsuite name="5. Affiliate Marketing (ORD-329) / 5.3 [Happy] POST /affiliates/register - Đăng ký CTV" id="4c699b87-0850-4542-aee9-1ea94b0a1431" timestamp="2026-09-03T01:10:03.914Z" tests="2" failures="0" errors="0" time="0.029">
+    <testcase name="Status 201 Created" time="0.029" classname="5AffiliateMarketingOrd32953HappyPostAffiliatesRegisterDangKyCtv"/>
+    <testcase name="Có message đăng ký thành công" time="0.029" classname="5AffiliateMarketingOrd32953HappyPostAffiliatesRegisterDangKyCtv"/>
+  </testsuite>
+  <testsuite name="5. Affiliate Marketing (ORD-329) / 5.4 [Happy] GET /affiliates/status - Mã và link CTV" id="5e60805c-467a-4bbf-9b53-696e4dc588bd" timestamp="2026-09-03T01:10:03.914Z" tests="2" failures="0" errors="0" time="0.005">
+    <testcase name="Status 200 OK" time="0.005" classname="5AffiliateMarketingOrd32954HappyGetAffiliatesStatusMaVaLinkCtv"/>
+    <testcase name="registered=true, có ctv_code và affiliate_link" time="0.005" classname="5AffiliateMarketingOrd32954HappyGetAffiliatesStatusMaVaLinkCtv"/>
+  </testsuite>
+  <testsuite name="5. Affiliate Marketing (ORD-329) / 5.5 [Happy] GET /affiliate/report - Báo cáo CTV" id="ed6d22c1-cce4-47e9-ab92-ebb2b4a1b255" timestamp="2026-09-03T01:10:03.914Z" tests="2" failures="0" errors="0" time="0.011">
+    <testcase name="Status 200 OK" time="0.011" classname="5AffiliateMarketingOrd32955HappyGetAffiliateReportBaoCaoCtv"/>
+    <testcase name="Có stats, clicks và revenues đúng schema" time="0.011" classname="5AffiliateMarketingOrd32955HappyGetAffiliateReportBaoCaoCtv"/>
+  </testsuite>
+  <testsuite name="5. Affiliate Marketing (ORD-329) / 5.6 [BVA] POST /affiliate/withdrawals - Dưới mức tối thiểu" id="366d1109-cd36-44f3-9ce0-f3ce0dbd3d55" timestamp="2026-09-03T01:10:03.914Z" tests="2" failures="0" errors="0" time="0.015">
+    <testcase name="Status 400 dưới mức rút tối thiểu" time="0.015" classname="5AffiliateMarketingOrd32956BvaPostAffiliateWithdrawalsDiMcTiThiu"/>
+    <testcase name="Có message validation" time="0.015" classname="5AffiliateMarketingOrd32956BvaPostAffiliateWithdrawalsDiMcTiThiu"/>
+  </testsuite>
+</testsuites>
