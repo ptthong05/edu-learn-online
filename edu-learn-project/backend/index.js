@@ -551,32 +551,48 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
     return res.status(400).json({ message: 'Giỏ hàng trống hoặc không hợp lệ.' });
   }
 
+  let db;
+  let transactionStarted = false;
+
   try {
-    const db = await getDatabase();
+    db = await getDatabase();
 
     // 1. Tính tổng tiền thực tế độc lập từ CSDL (Chống sửa giá từ client)
     let calculatedSubtotal = 0;
     const validatedItems = [];
+
     for (const item of items) {
       if (!item || typeof item !== 'object' || !item.course_id) continue;
+
       let productPrice = 0;
       let productName = typeof item.product_name === 'string' ? item.product_name : '';
 
-      const course = await db.get("SELECT id, title, price, sale_price FROM courses WHERE id = ?", [item.course_id]);
+      const course = await db.get(
+        'SELECT id, title, price, sale_price FROM courses WHERE id = ?',
+        [item.course_id]
+      );
+
       if (course) {
         const hasSale = course.sale_price !== null && course.sale_price !== undefined;
         productPrice = hasSale ? course.sale_price : course.price;
         productName = course.title;
       } else {
-        const combo = await db.get("SELECT id, title, price, sale_price FROM combos WHERE id = ?", [item.course_id]);
+        const combo = await db.get(
+          'SELECT id, title, price, sale_price FROM combos WHERE id = ?',
+          [item.course_id]
+        );
+
         if (combo) {
           const hasComboSale = combo.sale_price !== null && combo.sale_price !== undefined;
           productPrice = hasComboSale ? combo.sale_price : combo.price;
           productName = combo.title;
         } else {
+          // Giữ nguyên behavior hiện tại.
+          // Trường hợp sản phẩm không tồn tại đang được theo dõi ở bug khác.
           productPrice = Math.max(0, Number(item.price) || 0);
         }
       }
+
       calculatedSubtotal += productPrice;
       validatedItems.push({
         course_id: String(item.course_id),
@@ -586,20 +602,24 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
     }
 
     if (validatedItems.length === 0) {
-      return res.status(400).json({ message: 'Không tìm thấy sản phẩm hợp lệ trong giỏ hàng.' });
+      return res.status(400).json({
+        message: 'Không tìm thấy sản phẩm hợp lệ trong giỏ hàng.'
+      });
     }
 
     // 2. Xác thực coupon phía server nếu có áp mã
     let serverDiscount = 0;
     let couponRecord = null;
+
     if (coupon_code && typeof coupon_code === 'string' && coupon_code.trim()) {
       couponRecord = await db.get(
-        "SELECT * FROM coupons WHERE UPPER(code) = ?",
+        'SELECT * FROM coupons WHERE UPPER(code) = ?',
         [coupon_code.trim().toUpperCase()]
       );
 
       const today = new Date().toISOString().split('T')[0];
       const check = validateCouponEligibility(couponRecord, calculatedSubtotal, today);
+
       if (!check.valid) {
         return res.status(check.status).json({ message: check.message });
       }
@@ -610,15 +630,18 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
     // 3. Tính tổng tiền cuối cùng an toàn phía server
     const finalTotal = Math.max(0, calculatedSubtotal - serverDiscount);
 
-    // Check if affiliate exists and is approved
+    // 4. Kiểm tra affiliate
     let orderIdPrefix = 'ORD';
     let affRecord = null;
+
     if (ref && typeof ref === 'string' && ref.trim()) {
       const cleanRef = ref.trim();
+
       affRecord = await db.get(
-        "SELECT * FROM affiliates WHERE id = ? OR ctv_code = ? OR ma_ctv = ?",
+        'SELECT * FROM affiliates WHERE id = ? OR ctv_code = ? OR ma_ctv = ?',
         [cleanRef, cleanRef, cleanRef]
       );
+
       if (affRecord && affRecord.status === 'approved') {
         orderIdPrefix = affRecord.ctv_code || affRecord.ma_ctv || 'CTV';
       }
@@ -626,13 +649,17 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
 
     const orderId = `${orderIdPrefix}-${Date.now()}`;
     const now = new Date().toISOString();
-
-    // Generate QR content for all payment methods
     const paymentQrContent = payment_qr_content || orderId;
 
+    // 5. Bắt đầu transaction trước mọi thao tác ghi dữ liệu đơn hàng
+    await db.exec('BEGIN TRANSACTION');
+    transactionStarted = true;
+
     await db.run(
-      `INSERT INTO orders (id, user_id, total, subtotal, coupon_code, discount_amount, payment_method, status, created_at, payment_qr_content, payment_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO orders (
+        id, user_id, total, subtotal, coupon_code, discount_amount,
+        payment_method, status, created_at, payment_qr_content, payment_status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderId,
         req.user.id,
@@ -649,66 +676,130 @@ app.post('/api/orders', authenticateToken, checkUserStatus, async (req, res) => 
     );
 
     if (couponRecord) {
-      await db.run(
-        "UPDATE coupons SET used_count = used_count + 1 WHERE id = ? AND used_count < quantity",
+      const couponUpdate = await db.run(
+        'UPDATE coupons SET used_count = used_count + 1 WHERE id = ? AND used_count < quantity',
         [couponRecord.id]
       );
+
+      if (couponUpdate.changes !== 1) {
+        throw new Error('Không thể cập nhật lượt sử dụng coupon.');
+      }
     }
 
     for (const item of validatedItems) {
       await db.run(
-        "INSERT INTO order_details (order_id, course_id, price, product_name) VALUES (?, ?, ?, ?)",
+        'INSERT INTO order_details (order_id, course_id, price, product_name) VALUES (?, ?, ?, ?)',
         [orderId, item.course_id, item.price, item.product_name || item.course_id]
       );
 
-      // Handle affiliate commission notification if ref present and affiliate approved
       if (affRecord && affRecord.status === 'approved') {
-        const commRow = await db.get("SELECT commission_rate FROM affiliate_commissions WHERE course_id = ?", [item.course_id]);
-        const rate = commRow ? commRow.commission_rate : 10.0;
-        const commission = Math.round(item.price * rate / 100);
-        const buyer = await db.get("SELECT full_name FROM users WHERE id = ?", [req.user.id]);
-        const notifId = `notif-pending-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-        // 1. Insert into notifications
-        await db.run(
-          "INSERT INTO affiliate_notifications (id, affiliate_id, order_id, course_id, buyer_name, amount, commission, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          [notifId, affRecord.id, orderId, item.course_id, buyer?.full_name || 'Khách hàng', item.price, commission, now]
+        const commRow = await db.get(
+          'SELECT commission_rate FROM affiliate_commissions WHERE course_id = ?',
+          [item.course_id]
         );
 
-        // 2. Insert into affiliate_revenues ledger
-        const revId = `rev-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const rate = commRow ? commRow.commission_rate : 10.0;
+        const commission = Math.round(item.price * rate / 100);
+        const buyer = await db.get(
+          'SELECT full_name FROM users WHERE id = ?',
+          [req.user.id]
+        );
+
+        const notifId = `notif-pending-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
         await db.run(
-          `INSERT INTO affiliate_revenues (id, affiliate_id, order_id, course_id, buyer_name, order_total, commission_rate, commission_amount, status, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [revId, affRecord.id, orderId, item.course_id, buyer?.full_name || 'Khách hàng', item.price, rate, commission, 'pending', now]
+          `INSERT INTO affiliate_notifications (
+            id, affiliate_id, order_id, course_id, buyer_name,
+            amount, commission, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            notifId,
+            affRecord.id,
+            orderId,
+            item.course_id,
+            buyer?.full_name || 'Khách hàng',
+            item.price,
+            commission,
+            now
+          ]
+        );
+
+        const revId = `rev-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+        await db.run(
+          `INSERT INTO affiliate_revenues (
+            id, affiliate_id, order_id, course_id, buyer_name,
+            order_total, commission_rate, commission_amount, status, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            revId,
+            affRecord.id,
+            orderId,
+            item.course_id,
+            buyer?.full_name || 'Khách hàng',
+            item.price,
+            rate,
+            commission,
+            'pending',
+            now
+          ]
         );
       }
     }
 
-    // Get user information for email
-    const user = await db.get("SELECT full_name, email FROM users WHERE id = ?", [req.user.id]);
-    
-    // Get order details with items for email
-    const orderItems = await db.all(`
-      SELECT od.*, 
-             COALESCE(od.product_name, c.title, cb.title, od.course_id) AS title 
-      FROM order_details od 
-      LEFT JOIN courses c ON c.id = od.course_id 
-      LEFT JOIN combos cb ON cb.id = od.course_id
-      WHERE od.order_id = ?
-    `, [orderId]);
+    // 6. Chỉ commit khi tất cả thao tác ghi đều thành công
+    await db.exec('COMMIT');
+    transactionStarted = false;
 
-    // Send confirmation email (don't wait for result to avoid blocking response)
-    if (user && user.email) {
-      sendOrderConfirmationEmail(orderId, user.email, user.full_name, {
-        items: orderItems,
-        total: finalTotal,
-        payment_method: payment_method
-      }).catch(err => console.error('Failed to send order confirmation email:', err));
+    // 7. Email là hậu xử lý, không được làm rollback đơn đã commit
+    try {
+      const user = await db.get(
+        'SELECT full_name, email FROM users WHERE id = ?',
+        [req.user.id]
+      );
+
+      const orderItems = await db.all(
+        `SELECT od.*,
+                COALESCE(od.product_name, c.title, cb.title, od.course_id) AS title
+         FROM order_details od
+         LEFT JOIN courses c ON c.id = od.course_id
+         LEFT JOIN combos cb ON cb.id = od.course_id
+         WHERE od.order_id = ?`,
+        [orderId]
+      );
+
+      if (user && user.email) {
+        sendOrderConfirmationEmail(orderId, user.email, user.full_name, {
+          items: orderItems,
+          total: finalTotal,
+          payment_method
+        }).catch(err => console.error('Failed to send order confirmation email:', err));
+      }
+    } catch (emailPreparationError) {
+      console.error('Failed to prepare order confirmation email:', emailPreparationError);
     }
 
-    res.status(201).json({ message: 'Đặt hàng thành công.', orderId });
+    return res.status(201).json({
+      message: 'Đặt hàng thành công.',
+      orderId
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server.', error: error.message });
+    if (transactionStarted && db) {
+      try {
+        await db.exec('ROLLBACK');
+        transactionStarted = false;
+        console.log('Order transaction rolled back successfully.');
+      } catch (rollbackError) {
+        console.error('Order rollback failed:', rollbackError);
+      }
+    }
+
+    console.error('Create order failed:', error);
+
+    return res.status(500).json({
+      message: 'Lỗi server.',
+      error: error.message
+    });
   }
 });
 
