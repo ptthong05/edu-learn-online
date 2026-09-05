@@ -43,16 +43,22 @@ const usersSchema = await database.get(
   "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'"
 );
 
+const hasRoleCheck =
+  usersSchema?.sql?.includes(
+    "CHECK (role IN ('USER', 'MANAGER', 'STAFF', 'AFFILIATE'))"
+  );
+
+const hasStatusCheck =
+  usersSchema?.sql?.includes(
+    "CHECK (status IN ('active', 'blocked'))"
+  );
+
 if (
   usersSchema &&
   usersSchema.sql &&
-  (
-    !/role\s+TEXT\s+NOT\s+NULL\s+DEFAULT\s+'USER'\s+CHECK\s*\(\s*role\s+IN\s*\('USER',\s*'MANAGER',\s*'STAFF',\s*'AFFILIATE'\)\s*\)/i.test(usersSchema.sql) ||
-    !/status\s+TEXT\s+NOT\s+NULL\s+DEFAULT\s+'active'\s+CHECK\s*\(\s*status\s+IN\s*\('active',\s*'blocked'\)\s*\)/i.test(usersSchema.sql)
-  )
+  (!hasRoleCheck || !hasStatusCheck)
 ) {
   console.log('Migrating users table: add CHECK constraints for role/status...');
-
   await database.exec('PRAGMA foreign_keys = OFF');
 
   try {
@@ -119,7 +125,9 @@ if (
   } catch (error) {
     try {
       await database.exec('ROLLBACK');
-    } catch (_) {}
+    } catch (rollbackError) {
+  console.error('Rollback failed:', rollbackError);
+}
 
     throw error;
   } finally {
@@ -294,7 +302,9 @@ if (
   } catch (error) {
     try {
       await database.exec('ROLLBACK');
-    } catch (_) {}
+    } catch (rollbackError) {
+  console.error('Rollback failed:', rollbackError);
+}
 
     throw error;
   } finally {
