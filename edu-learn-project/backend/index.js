@@ -157,10 +157,34 @@ async function generateUniqueCtvCode(db) {
 
 // ================= AUTH ROUTES =================
 app.post('/api/auth/register', async (req, res) => {
-  const full_name = req.body.full_name?.trim();
-  const email = req.body.email?.trim().toLowerCase();
-  const phone = req.body.phone?.trim();
-  const { password } = req.body;
+  if (!req.body || typeof req.body !== 'object') {
+    return res.status(400).json({
+      message: 'Dữ liệu đăng ký không hợp lệ.'
+    });
+  }
+
+  const {
+    full_name: rawFullName,
+    email: rawEmail,
+    phone: rawPhone,
+    password: rawPassword
+  } = req.body;
+
+  if (
+    typeof rawFullName !== 'string' ||
+    typeof rawEmail !== 'string' ||
+    typeof rawPhone !== 'string' ||
+    typeof rawPassword !== 'string'
+  ) {
+    return res.status(400).json({
+      message: 'Họ tên, email, số điện thoại và mật khẩu phải là chuỗi.'
+    });
+  }
+
+  const full_name = rawFullName.trim();
+  const email = rawEmail.trim().toLowerCase();
+  const phone = rawPhone.trim();
+  const password = rawPassword;
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phonePattern = /^0(?:3|5|7|8|9)\d{8}$/;
   const strongPasswordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
