@@ -159,6 +159,8 @@ jobs:
 
       - name: Start Backend
         working-directory: ./edu-learn-project/backend
+        env:
+          JWT_SECRET: ci_test_secret_for_edulearn_2026_only
         run: |
           npm start > backend.log 2>&1 &
           echo $! > backend.pid
