@@ -1,40 +1,31 @@
-﻿# Học trực tuyến
+# Học trực tuyến
 
 ## Truy cập khóa học đã mua
 
 1. Đăng nhập vào tài khoản
-2. Vào **Tài khoản → Khóa học của tôi** (`/tai-khoan?tab=courses`)
-3. Nhấn **Học ngay** trên khóa học muốn học
+2. Vào **Tài khoản → Khóa học của tôi** (`/tai-khoan?tab=courses`) hoặc truy cập `/my-courses`
+3. Nhấn **Vào học ngay** trên khóa học muốn học
 
-## Giao diện học
+## Giao diện học trực tuyến
 
-### Thanh nội dung (Sidebar)
-- Danh sách các **Chương** và **Bài học**
-- Đánh dấu ✅ các bài học đã hoàn thành
-- Thanh tiến độ phần trăm hoàn thành
+### Danh sách chương mục & bài học
+- Xem toàn bộ danh sách các **Chương** và **Bài học** trong khóa học
+- Nhấp chọn bài học bất kỳ để chuyển nhanh nội dung video giảng dạy
 
-### Khu vực học
-- **Video**: Trình phát video bài học
-- **Tài liệu**: Tải file tài liệu đính kèm
-- **Nội dung**: Đọc nội dung văn bản bài học
+### Khu vực phát video bài giảng
+- **Video Player**: Trình phát video bài giảng chất lượng cao, hỗ trợ tùy chỉnh tốc độ, âm lượng và toàn màn hình
+- **Nội dung & Tài liệu**: Xem mô tả chi tiết, điểm nổi bật và tài liệu hướng dẫn đính kèm theo bài học
 
-## Theo dõi tiến độ
+## Khóa học miễn phí (0đ)
 
-- Mỗi bài học khi xem xong được đánh dấu **Đã hoàn thành**
-- Thanh tiến độ tổng thể cập nhật tự động
-- Xem tiến độ chi tiết trong trang **Tài khoản**
-
-## Khóa học miễn phí
-
-- Một số khóa học được cung cấp miễn phí
-- Không cần thanh toán, nhấn **Đăng ký học miễn phí** để thêm vào thư viện
+- Hệ thống cung cấp các khóa học miễn phí (học phí `0đ`) dành cho cộng đồng
+- Người dùng có thể lọc các khóa học miễn phí trên trang danh mục `/courses` và tiến hành đặt đơn để thêm khóa học vào thư viện cá nhân
 
 ## Khóa học của tôi
 
-Trang `/tai-khoan?tab=courses` hiển thị:
-- Tất cả khóa học đã mua / đăng ký miễn phí
-- Tiến độ học từng khóa
-- Nút **Tiếp tục học** cho khóa học đang dở
+Trang `/tai-khoan?tab=courses` và `/my-courses` hiển thị:
+- Danh sách tất cả các khóa học và Combo bạn đã sở hữu
+- Nút **Vào học ngay** để mở trực tiếp giao diện phát video bài giảng
 
 ## Câu hỏi thường gặp khi học
 

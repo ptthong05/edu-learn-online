@@ -1,0 +1,1117 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "EduLearn Online API Specification",
+    "version": "1.0.0",
+    "description": "Tài liệu API chính thức và đặc tả OpenAPI 3.0 cho nền tảng học trực tuyến EduLearn Online.",
+    "contact": {
+      "name": "EduLearn Development Team",
+      "email": "ptthong.www@gmail.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Nhập JWT Token nhận được sau khi đăng nhập (ví dụ: Bearer <token>)"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "full_name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "AFFILIATE",
+              "MANAGER",
+              "STAFF"
+            ]
+          }
+        }
+      },
+      "Course": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "sale_price": {
+            "type": "number"
+          },
+          "category_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "published",
+              "draft",
+              "hidden"
+            ]
+          }
+        }
+      },
+      "Coupon": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "discount": {
+            "type": "number"
+          },
+          "discount_type": {
+            "type": "string",
+            "enum": [
+              "percent",
+              "fixed"
+            ]
+          },
+          "max_discount": {
+            "type": "number"
+          },
+          "min_order_amount": {
+            "type": "number"
+          },
+          "usable_by": {
+            "type": "string",
+            "enum": [
+              "user",
+              "affiliate",
+              "all"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "completed",
+              "cancelled"
+            ]
+          },
+          "payment_status": {
+            "type": "string",
+            "enum": [
+              "chua_thanh_toan",
+              "da_thanh_toan"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/register": {
+      "post": {
+        "summary": "Đăng ký tài khoản mới",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password",
+                  "full_name"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "Admin@123"
+                  },
+                  "full_name": {
+                    "type": "string",
+                    "example": "Nguyễn Văn A"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "0912345678"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Đăng ký thành công"
+          },
+          "400": {
+            "description": "Dữ liệu không hợp lệ hoặc email đã tồn tại"
+          }
+        }
+      }
+    },
+    "/api/login": {
+      "post": {
+        "summary": "Đăng nhập hệ thống",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "Admin@123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Đăng nhập thành công, trả về JWT Token và thông tin user"
+          },
+          "401": {
+            "description": "Email hoặc mật khẩu không chính xác"
+          }
+        }
+      }
+    },
+    "/api/forgot-password": {
+      "post": {
+        "summary": "Yêu cầu khôi phục mật khẩu",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Đã gửi email khôi phục mật khẩu"
+          },
+          "404": {
+            "description": "Email không tồn tại trong hệ thống"
+          }
+        }
+      }
+    },
+    "/api/reset-password": {
+      "post": {
+        "summary": "Đặt lại mật khẩu mới",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token",
+                  "new_password"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "new_password": {
+                    "type": "string",
+                    "example": "NewPass@123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Đổi mật khẩu thành công"
+          },
+          "400": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          }
+        }
+      }
+    },
+    "/api/users/profile": {
+      "get": {
+        "summary": "Lấy thông tin cá nhân của người dùng hiện tại",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thông tin profile người dùng"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc token hết hạn"
+          }
+        }
+      },
+      "put": {
+        "summary": "Cập nhật thông tin cá nhân",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "full_name": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cập nhật profile thành công"
+          }
+        }
+      }
+    },
+    "/api/courses": {
+      "get": {
+        "summary": "Lấy danh sách khóa học công khai",
+        "tags": [
+          "Courses"
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách khóa học"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}": {
+      "get": {
+        "summary": "Lấy chi tiết một khóa học",
+        "tags": [
+          "Courses"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chi tiết khóa học"
+          },
+          "404": {
+            "description": "Không tìm thấy khóa học"
+          }
+        }
+      }
+    },
+    "/api/admin/courses": {
+      "get": {
+        "summary": "Lấy danh sách toàn bộ khóa học dành cho Admin",
+        "tags": [
+          "Admin - Courses"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách quản trị khóa học"
+          }
+        }
+      },
+      "post": {
+        "summary": "Tạo khóa học mới",
+        "tags": [
+          "Admin - Courses"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "price"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "number"
+                  },
+                  "sale_price": {
+                    "type": "number"
+                  },
+                  "category_id": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tạo khóa học thành công"
+          }
+        }
+      }
+    },
+    "/api/admin/courses/{id}": {
+      "put": {
+        "summary": "Cập nhật khóa học",
+        "tags": [
+          "Admin - Courses"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cập nhật thành công"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Xóa khóa học",
+        "tags": [
+          "Admin - Courses"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Xóa thành công"
+          }
+        }
+      }
+    },
+    "/api/combos": {
+      "get": {
+        "summary": "Lấy danh sách Combo khóa học",
+        "tags": [
+          "Combos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách combo"
+          }
+        }
+      }
+    },
+    "/api/orders/validate-coupon": {
+      "post": {
+        "summary": "Kiểm tra tính hợp lệ và tính toán giảm giá của Mã giảm giá",
+        "tags": [
+          "Coupons"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code",
+                  "subtotal"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "example": "GIAM20"
+                  },
+                  "subtotal": {
+                    "type": "number",
+                    "example": 500000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kết quả kiểm tra coupon và mức giảm giá tính toán"
+          }
+        }
+      }
+    },
+    "/api/admin/coupons": {
+      "get": {
+        "summary": "Danh sách mã giảm giá (Admin)",
+        "tags": [
+          "Admin - Coupons"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách mã giảm giá"
+          }
+        }
+      },
+      "post": {
+        "summary": "Tạo mã giảm giá mới",
+        "tags": [
+          "Admin - Coupons"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Tạo coupon thành công"
+          }
+        }
+      }
+    },
+    "/api/admin/coupons/{id}": {
+      "put": {
+        "summary": "Cập nhật mã giảm giá",
+        "tags": [
+          "Admin - Coupons"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cập nhật coupon thành công"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Xóa mã giảm giá",
+        "tags": [
+          "Admin - Coupons"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Xóa coupon thành công"
+          }
+        }
+      }
+    },
+    "/api/orders": {
+      "get": {
+        "summary": "Lấy danh sách đơn hàng của người dùng hiện tại",
+        "tags": [
+          "Orders"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách đơn hàng của user"
+          }
+        }
+      },
+      "post": {
+        "summary": "Tạo đơn hàng mới",
+        "tags": [
+          "Orders"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "items",
+                  "payment_method"
+                ],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "coupon_code": {
+                    "type": "string"
+                  },
+                  "payment_method": {
+                    "type": "string",
+                    "example": "bank_transfer"
+                  },
+                  "affiliate_code": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tạo đơn hàng thành công"
+          }
+        }
+      }
+    },
+    "/api/orders/upload-proof": {
+      "post": {
+        "summary": "Tải lên ảnh bằng chứng thanh toán cho đơn hàng",
+        "tags": [
+          "Orders"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "order_id",
+                  "proof_image"
+                ],
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  },
+                  "proof_image": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tải lên bằng chứng thành công"
+          }
+        }
+      }
+    },
+    "/api/admin/orders": {
+      "get": {
+        "summary": "Lấy danh sách toàn bộ đơn hàng (Admin)",
+        "tags": [
+          "Admin - Orders"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách đơn hàng hệ thống"
+          }
+        }
+      }
+    },
+    "/api/admin/orders/{id}/status": {
+      "put": {
+        "summary": "Cập nhật trạng thái xử lý đơn hàng",
+        "tags": [
+          "Admin - Orders"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "completed",
+                      "cancelled"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cập nhật trạng thái thành công"
+          }
+        }
+      }
+    },
+    "/api/admin/orders/{id}/payment-status": {
+      "put": {
+        "summary": "Cập nhật trạng thái thanh toán đơn hàng",
+        "tags": [
+          "Admin - Orders"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "payment_status"
+                ],
+                "properties": {
+                  "payment_status": {
+                    "type": "string",
+                    "enum": [
+                      "chua_thanh_toan",
+                      "da_thanh_toan"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cập nhật thanh toán thành công"
+          }
+        }
+      }
+    },
+    "/api/affiliate/report": {
+      "get": {
+        "summary": "Báo cáo số liệu hoa hồng & lượt click của CTV",
+        "tags": [
+          "Affiliate"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dữ liệu báo cáo affiliate"
+          }
+        }
+      }
+    },
+    "/api/affiliate/withdrawals": {
+      "get": {
+        "summary": "Lịch sử yêu cầu rút tiền của CTV",
+        "tags": [
+          "Affiliate"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách lịch sử rút tiền"
+          }
+        }
+      },
+      "post": {
+        "summary": "Tạo yêu cầu rút tiền hoa hồng mới (Tối thiểu 50.000đ)",
+        "tags": [
+          "Affiliate"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "amount",
+                  "bank_name",
+                  "account_number",
+                  "account_holder"
+                ],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "example": 500000,
+                    "minimum": 50000
+                  },
+                  "bank_name": {
+                    "type": "string",
+                    "example": "Techcombank"
+                  },
+                  "account_number": {
+                    "type": "string",
+                    "example": "190358291829"
+                  },
+                  "account_holder": {
+                    "type": "string",
+                    "example": "NGUYEN VAN A"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tạo yêu cầu rút tiền thành công"
+          },
+          "400": {
+            "description": "Số dư không đủ hoặc số tiền dưới hạn mức 50.000đ"
+          }
+        }
+      }
+    },
+    "/api/admin/withdrawals": {
+      "get": {
+        "summary": "Danh sách các yêu cầu rút tiền CTV (Admin)",
+        "tags": [
+          "Admin - Withdrawals"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách yêu cầu rút tiền"
+          }
+        }
+      }
+    },
+    "/api/admin/withdrawals/{id}/status": {
+      "put": {
+        "summary": "Duyệt hoặc từ chối yêu cầu rút tiền của CTV",
+        "tags": [
+          "Admin - Withdrawals"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "completed",
+                      "rejected"
+                    ]
+                  },
+                  "admin_note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cập nhật trạng thái rút tiền thành công"
+          }
+        }
+      }
+    },
+    "/api/admin/stats": {
+      "get": {
+        "summary": "Tổng quan các chỉ số thống kê hệ thống",
+        "tags": [
+          "Admin - Dashboard"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Số liệu tổng quan doanh thu, đơn hàng, khách hàng"
+          }
+        }
+      }
+    },
+    "/api/site-settings": {
+      "get": {
+        "summary": "Lấy cấu hình chung website (Tên site, logo, hotline, banner)",
+        "tags": [
+          "Site Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Cấu hình website hiện tại"
+          }
+        }
+      }
+    }
+  }
+}

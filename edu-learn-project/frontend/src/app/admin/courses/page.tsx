@@ -61,88 +61,6 @@ function RichEditor({ value, onChange, placeholder }: { value: string; onChange:
   );
 }
 
-function LegacyRichEditor({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  
-  const command = (name: string, valueArgument?: string) => {
-    ref.current?.focus();
-    document.execCommand(name, false, valueArgument);
-    onChange(ref.current?.innerHTML || '');
-  };
-
-  useEffect(() => {
-    if (ref.current && ref.current.innerHTML !== value) {
-      ref.current.innerHTML = value;
-    }
-  }, [value]);
-
-  const insertIcon = (icon: string) => {
-    ref.current?.focus();
-    document.execCommand('insertText', false, icon);
-    onChange(ref.current?.innerHTML || '');
-  };
-
-  const emojis = ['📚', '💻', '🚀', '💡', '⭐', '✔️', '📝', '🎯', '🔑', '🎨', '🧪', '📈', '🔥', '🏆', '👥', '💬'];
-
-  return (
-    <div className="rounded-xl overflow-hidden border border-gray-700 bg-gray-950 font-sans">
-      <div className="flex flex-wrap gap-1 p-2 border-b border-gray-700 bg-gray-900/50 items-center">
-        {/* Basic formats */}
-        <button type="button" onClick={() => command('bold')} className="w-8 h-8 rounded hover:bg-gray-800 font-bold text-gray-200 flex items-center justify-center text-sm" title="In đậm">B</button>
-        <button type="button" onClick={() => command('italic')} className="w-8 h-8 rounded hover:bg-gray-800 italic text-gray-200 flex items-center justify-center text-sm" title="In nghiêng">I</button>
-        <button type="button" onClick={() => command('underline')} className="w-8 h-8 rounded hover:bg-gray-800 underline text-gray-200 flex items-center justify-center text-sm" title="Gạch chân">U</button>
-        
-        <div className="w-px h-5 bg-gray-700 mx-1" />
-
-        {/* Alignment */}
-        <button type="button" onClick={() => command('justifyLeft')} className="w-8 h-8 rounded hover:bg-gray-800 text-gray-300 flex items-center justify-center" title="Căn trái">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10M4 18h16" /></svg>
-        </button>
-        <button type="button" onClick={() => command('justifyCenter')} className="w-8 h-8 rounded hover:bg-gray-800 text-gray-300 flex items-center justify-center" title="Căn giữa">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-        </button>
-        <button type="button" onClick={() => command('justifyRight')} className="w-8 h-8 rounded hover:bg-gray-800 text-gray-300 flex items-center justify-center" title="Căn phải">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M10 12h10M4 18h16" /></svg>
-        </button>
-        <button type="button" onClick={() => command('justifyFull')} className="w-8 h-8 rounded hover:bg-gray-800 text-gray-300 flex items-center justify-center" title="Căn đều">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-        </button>
-
-        <div className="w-px h-5 bg-gray-700 mx-1" />
-
-        {/* Lists */}
-        <button type="button" onClick={() => command('insertUnorderedList')} className="w-12 h-8 rounded hover:bg-gray-800 text-gray-200 flex items-center justify-center text-xs font-semibold" title="Danh sách chấm tròn">• List</button>
-        <button type="button" onClick={() => command('insertOrderedList')} className="w-12 h-8 rounded hover:bg-gray-800 text-gray-200 flex items-center justify-center text-xs font-semibold" title="Danh sách số">1. List</button>
-
-        <div className="w-px h-5 bg-gray-700 mx-1" />
-
-        {/* Emoji picker */}
-        <div className="relative group flex items-center">
-          <button type="button" className="px-2 py-1 text-xs rounded hover:bg-gray-800 text-primary-400 font-bold border border-primary-500/20" title="Chèn icon">
-            😊 Chèn Icon
-          </button>
-          <div className="absolute top-full left-0 mt-1 hidden group-hover:grid grid-cols-4 gap-1.5 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 w-36">
-            {emojis.map(e => (
-              <button key={e} type="button" onClick={() => insertIcon(e)} className="hover:bg-gray-800 w-6 h-6 flex items-center justify-center rounded text-sm transition">
-                {e}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-      
-      <div
-        ref={ref}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={() => onChange(ref.current?.innerHTML || '')}
-        className="min-h-32 max-h-60 overflow-y-auto p-3 outline-none text-sm leading-6 text-gray-200 bg-gray-950 text-white"
-        data-placeholder={placeholder}
-      />
-    </div>
-  );
-}
-
 function CategorySearchInput({
   categories,
   value,
@@ -450,21 +368,6 @@ export default function AdminCourses() {
       } catch (err: any) {
         toast.error(err.message || 'Lỗi khi xóa khóa học.');
       }
-    }
-  };
-
-  const toggleStatus = async (c: Course) => {
-    const newStatus = c.status === 'published' ? 'hidden' : 'published';
-    try {
-      await api.updateCourse(c.id, {
-        title: c.title,
-        price: c.price,
-        status: newStatus
-      });
-      toast.success(newStatus === 'published' ? 'Hiển thị khóa học thành công.' : 'Ẩn khóa học thành công.');
-      fetchCourses();
-    } catch (err: any) {
-      toast.error(err.message || 'Lỗi khi cập nhật trạng thái.');
     }
   };
 

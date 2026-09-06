@@ -10,7 +10,6 @@ import toast from 'react-hot-toast';
 
 export default function AdminCoupons() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [editCoupon, setEditCoupon] = useState<Coupon | null>(null);
   const [couponCodeFilter, setCouponCodeFilter] = useState('');
@@ -26,14 +25,12 @@ export default function AdminCoupons() {
   const [minOrderAmount, setMinOrderAmount] = useState('0');
 
   const fetchCoupons = () => {
-    setLoading(true);
     api.getAdminCoupons()
       .then(setCoupons)
       .catch(err => {
         console.error(err);
         toast.error('Lỗi khi tải danh sách mã giảm giá.');
-      })
-      .finally(() => setLoading(false));
+      });
   };
 
   useEffect(() => {

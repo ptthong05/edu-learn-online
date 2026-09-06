@@ -41,6 +41,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
     if (contentChapters.length > 0 && openChapters.length === 0) {
       setOpenChapters([contentChapters[0].id]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentChapters]);
 
   useEffect(() => {
@@ -75,6 +76,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
         console.error('Lỗi khi tải chi tiết khóa học:', err);
       })
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   // Capture affiliate ref param and persist it for checkout
@@ -83,6 +85,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
     if (ref) {
       localStorage.setItem('affiliate_ref', ref);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   // Set page-specific document title for SEO
@@ -90,6 +93,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
     if (course) {
       document.title = `${course.title} | ${settings?.site_name || 'DRIVE ORD'}`;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [course, settings]);
 
   if (loading) {

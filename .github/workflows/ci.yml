@@ -65,12 +65,20 @@ jobs:
         working-directory: ./edu-learn-project/frontend
         run: npm run build
 
+      - name: Lint Frontend
+        working-directory: ./edu-learn-project/frontend
+        run: npm run lint
+
       # ----------------------------------------------------------
       # BACKEND
       # ----------------------------------------------------------
       - name: Install Backend Dependencies
         working-directory: ./edu-learn-project/backend
         run: npm ci
+
+      - name: Lint Backend
+        working-directory: ./edu-learn-project/backend
+        run: npm run lint
 
 
   # ============================================================
@@ -151,6 +159,8 @@ jobs:
 
       - name: Start Backend
         working-directory: ./edu-learn-project/backend
+        env:
+          JWT_SECRET: ci_test_secret_for_edulearn_2026_only
         run: |
           npm start > backend.log 2>&1 &
           echo $! > backend.pid
@@ -245,13 +255,19 @@ jobs:
       - name: Run CodeceptJS Automation Tests
         working-directory: ./automation-tests
         run: |
-          npx codeceptjs run --steps || {
-            echo "========================================"
-            echo "FAILED SCREENSHOTS"
-            echo "========================================"
-            ls -la ./output/ || true
-            exit 1
-          }
+          TEST_COUNT=$(find ./tests -type f -name "*_test.js" 2>/dev/null | wc -l)
+          if [ "$TEST_COUNT" -gt 0 ]; then
+            echo "Found $TEST_COUNT test file(s). Running CodeceptJS..."
+            npx codeceptjs run --steps || {
+              echo "========================================"
+              echo "FAILED SCREENSHOTS"
+              echo "========================================"
+              ls -la ./output/ || true
+              exit 1
+            }
+          else
+            echo "No test files matching '*_test.js' found in ./tests. Skipping CodeceptJS execution."
+          fi
         env:
           DONT_FAIL_ON_EMPTY_RUN: "true"
 

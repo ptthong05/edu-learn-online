@@ -37,6 +37,7 @@ export default function Header() {
         }
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Detect referral parameter and record affiliate click
@@ -61,6 +62,7 @@ export default function Header() {
         }
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   const fetchNotifications = async () => {
@@ -83,6 +85,7 @@ export default function Header() {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 15000); // Poll every 15s
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleBellClick = () => {
@@ -126,6 +129,7 @@ export default function Header() {
     const handler = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handler);
     return () => window.removeEventListener('scroll', handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = () => {

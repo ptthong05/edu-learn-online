@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/lib/hooks/useCart';
 import { formatPrice } from '@/lib/utils/helpers';
+import { api } from '@/lib/utils/api';
 
 export default function CartPage() {
   const { cartItems: items, removeFromCart } = useCart();
@@ -20,21 +21,27 @@ export default function CartPage() {
     return sum + (price || 0);
   }, 0);
   
-  const total = subtotal - discount;
+  const total = Math.max(0, subtotal - discount);
 
-  const applyCoupon = () => {
-    if (coupon.toUpperCase() === 'SALE30') {
-      setDiscount(Math.round(subtotal * 0.3));
-      setCouponMsg('🎉 Áp dụng mã giảm 30% thành công!');
-    } else if (coupon.toUpperCase() === 'SUMMER50') {
-      setDiscount(Math.round(subtotal * 0.5));
-      setCouponMsg('🎉 Áp dụng mã giảm 50% thành công!');
-    } else if (coupon.toUpperCase() === 'NEWUSER') {
-      setDiscount(Math.min(subtotal, 100000));
-      setCouponMsg('🎉 Áp dụng mã giảm 100k thành công!');
-    } else {
+  const applyCoupon = async () => {
+    const code = coupon.trim().toUpperCase();
+    if (!code) {
       setDiscount(0);
-      setCouponMsg('❌ Mã giảm giá không hợp lệ hoặc đã hết hạn');
+      setCouponMsg('Vui lòng cung cấp mã giảm giá.');
+      return;
+    }
+    try {
+      const data = await api.validateCoupon(code, subtotal);
+      if (data.valid) {
+        setDiscount(data.calculated_discount || 0);
+        setCouponMsg(`🎉 ${data.message || 'Áp dụng mã giảm giá thành công!'}`);
+      } else {
+        setDiscount(0);
+        setCouponMsg(`❌ ${data.message || 'Mã giảm giá không hợp lệ'}`);
+      }
+    } catch (err: any) {
+      setDiscount(0);
+      setCouponMsg(`❌ ${err.message || 'Mã giảm giá không hợp lệ hoặc đã hết hạn'}`);
     }
   };
 

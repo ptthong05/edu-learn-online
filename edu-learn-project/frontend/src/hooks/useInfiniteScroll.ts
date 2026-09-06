@@ -90,6 +90,7 @@ export function useInfiniteScroll<T>({ fetchPage, limit = 16 }: UseInfiniteScrol
 
   return {
     items,
+    totalPages,
     loading,
     error,
     hasMore,

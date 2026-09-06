@@ -19,34 +19,37 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ');
 }
 
+const BANK_KEYWORDS: Array<{ keywords: string[]; bin: string }> = [
+  { keywords: ['mbbank', 'mb', 'quandoi', 'military'], bin: '970422' },
+  { keywords: ['vietcombank', 'vcb', 'vietcom'], bin: '970436' },
+  { keywords: ['techcombank', 'tcb', 'techcom'], bin: '970407' },
+  { keywords: ['bidv', 'bid'], bin: '970418' },
+  { keywords: ['vietinbank', 'ctg', 'vietin', 'congthuong', 'icb'], bin: '970415' },
+  { keywords: ['acb', 'achau'], bin: '970416' },
+  { keywords: ['vpbank', 'vpb', 'vp'], bin: '970432' },
+  { keywords: ['sacombank', 'stb', 'sacom'], bin: '970403' },
+  { keywords: ['tpbank', 'tpb', 'tp'], bin: '970423' },
+  { keywords: ['agribank', 'vba', 'nongnghiep', 'agri', 'varb'], bin: '970405' },
+  { keywords: ['vib'], bin: '970441' },
+  { keywords: ['shb'], bin: '970443' },
+  { keywords: ['ocb', 'phuongdong'], bin: '970448' },
+  { keywords: ['msb', 'hanghai', 'maritime'], bin: '970426' },
+  { keywords: ['hdbank', 'hdb'], bin: '970437' },
+  { keywords: ['scb', 'saigon'], bin: '970429' },
+  { keywords: ['lpbank', 'lpb', 'lienviet', 'buudien'], bin: '970449' },
+  { keywords: ['seabank', 'seab'], bin: '970440' },
+  { keywords: ['bacabank', 'bab'], bin: '970409' },
+  { keywords: ['pvcombank', 'pvc'], bin: '970412' },
+  { keywords: ['shinhan'], bin: '970424' },
+  { keywords: ['woori'], bin: '970457' }
+];
+
 export function getBankId(bankName: string): string {
-  if (!bankName) return '970422'; // Default to MB BIN
+  if (!bankName) return '970422';
   const name = bankName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (name.includes('mbbank') || name.includes('mb') || name.includes('quandoi') || name.includes('military')) return '970422'; // MB
-  if (name.includes('vietcombank') || name.includes('vcb') || name.includes('vietcom')) return '970436'; // VCB
-  if (name.includes('techcombank') || name.includes('tcb') || name.includes('techcom')) return '970407'; // TCB
-  if (name.includes('bidv') || name.includes('bid')) return '970418'; // BIDV
-  if (name.includes('vietinbank') || name.includes('ctg') || name.includes('vietin') || name.includes('congthuong') || name.includes('icb')) return '970415'; // CTG/ICB
-  if (name.includes('acb') || name.includes('achau')) return '970416'; // ACB
-  if (name.includes('vpbank') || name.includes('vpb') || name.includes('vp')) return '970432'; // VPB
-  if (name.includes('sacombank') || name.includes('stb') || name.includes('sacom')) return '970403'; // STB
-  if (name.includes('tpbank') || name.includes('tpb') || name.includes('tp')) return '970423'; // TPB
-  if (name.includes('agribank') || name.includes('vba') || name.includes('nongnghiep') || name.includes('agri') || name.includes('varb')) return '970405'; // VBA/VARB
-  if (name.includes('vib')) return '970441';
-  if (name.includes('shb')) return '970443';
-  if (name.includes('ocb') || name.includes('phuongdong')) return '970448';
-  if (name.includes('msb') || name.includes('hanghai') || name.includes('maritime')) return '970426';
-  if (name.includes('hdbank') || name.includes('hdb')) return '970437';
-  if (name.includes('scb') || name.includes('saigon')) return '970429';
-  if (name.includes('lpbank') || name.includes('lpb') || name.includes('lienviet') || name.includes('buudien')) return '970449';
-  if (name.includes('seabank') || name.includes('seab')) return '970440';
-  if (name.includes('bacabank') || name.includes('bab')) return '970409';
-  if (name.includes('pvcombank') || name.includes('pvc')) return '970412';
-  if (name.includes('shinhan')) return '970424';
-  if (name.includes('woori')) return '970457';
-  
-  const cleaned = bankName.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  return cleaned || '970422';
+  const matched = BANK_KEYWORDS.find(b => b.keywords.some(k => name.includes(k)));
+  if (matched) return matched.bin;
+  return bankName.toUpperCase().replace(/[^A-Z0-9]/g, '') || '970422';
 }
 
 const vietnameseToTelexMap: Record<string, string> = {

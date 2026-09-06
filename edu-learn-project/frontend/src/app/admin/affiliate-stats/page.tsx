@@ -73,16 +73,6 @@ export default function AdminAffiliateStatsPage() {
     ? stats 
     : stats.filter((stat: any) => stat.affiliate_id === selectedCtv);
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const STATS_PER_PAGE = 10;
-  const totalPages = Math.ceil(filteredStats.length / STATS_PER_PAGE);
-  const visibleStats = filteredStats.slice((currentPage - 1) * STATS_PER_PAGE, currentPage * STATS_PER_PAGE);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filteredStats.length]);
-
   if (loading) {
     return <div className="p-8 text-center text-gray-400">Đang tải thống kê affiliate...</div>;
   }

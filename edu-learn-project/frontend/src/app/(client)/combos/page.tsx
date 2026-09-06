@@ -74,11 +74,6 @@ function CombosContent() {
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
-  const handleBuyCombo = (combo: Combo) => {
-    addToCart(combo, 'combo');
-    setIsCartOpen(true);
-  };
-
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Hero Header */}

@@ -26,6 +26,7 @@ function CheckoutForm() {
     } else {
       setCheckoutItems(cartItems);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBuyNow, cartItems]);
   const [method, setMethod] = useState('bank_transfer');
   const [paymentMethods, setPaymentMethods] = useState<Array<{
@@ -44,6 +45,7 @@ function CheckoutForm() {
 
   useEffect(() => {
     fetchPaymentMethods();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPaymentMethods = async () => {
@@ -71,16 +73,11 @@ function CheckoutForm() {
   const [manualDiscount, setManualDiscount] = useState(0);
   const [showVoucherPanel, setShowVoucherPanel] = useState(false);
   const [validatedCoupon, setValidatedCoupon] = useState<any>(null);
-  const [savedCouponDiscount, setSavedCouponDiscount] = useState(0);
-  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [referralCode, setReferralCode] = useState('');
-  const previousSelectedCouponRef = useRef<string | null>(null);
   const subtotalRef = useRef(0);
-  const previousSubtotalRef = useRef(0);
   const [referralMsg, setReferralMsg] = useState('');
   const [referralName, setReferralName] = useState('');
   const [orderId, setOrderId] = useState<string | null>(null);
-  const [showPaymentProof, setShowPaymentProof] = useState(false);
   const [proofImage, setProofImage] = useState('');
   const [proofMsg, setProofMsg] = useState('');
   const [purchasedInfo, setPurchasedInfo] = useState<{
@@ -98,6 +95,7 @@ function CheckoutForm() {
         setReferralCode(storedRef);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -112,6 +110,7 @@ function CheckoutForm() {
   // Update subtotal ref whenever subtotal changes
   useEffect(() => {
     subtotalRef.current = subtotal;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subtotal]);
 
   // Get the active saved coupon
@@ -119,54 +118,13 @@ function CheckoutForm() {
     ? savedCoupons.find(c => c.id === selectedCoupon)
     : null;
 
-  // Validate saved coupon with backend when coupon selection or subtotal changes
-  useEffect(() => {
-    const validateSavedCoupon = async () => {
-      // Only validate if there's a selected coupon and subtotal
-      if (selectedCoupon && subtotal > 0) {
-        setIsValidatingCoupon(true);
-        try {
-          const data = await api.validateCoupon(
-            savedCoupons.find(c => c.id === selectedCoupon)?.code || '',
-            subtotal
-          );
-          
-          if (data.valid && data.calculated_discount !== undefined) {
-            // Update the discount with backend-calculated value
-            setSavedCouponDiscount(data.calculated_discount);
-          } else {
-            // If validation fails, set discount to 0
-            setSavedCouponDiscount(0);
-          }
-        } catch (err) {
-          // If validation fails, set discount to 0
-          console.error('Coupon validation error:', err);
-          setSavedCouponDiscount(0);
-        } finally {
-          setIsValidatingCoupon(false);
-        }
-      } else if (!selectedCoupon) {
-        setSavedCouponDiscount(0);
-      }
-      
-      // Update previous subtotal ref
-      previousSubtotalRef.current = subtotal;
-    };
-    
-    // Validate when selectedCoupon or subtotal changes
-    validateSavedCoupon();
-  }, [selectedCoupon, subtotal, savedCoupons]);
-
-  // Reset discount when coupon is deselected
-  useEffect(() => {
-    if (!selectedCoupon) {
-      setSavedCouponDiscount(0);
-    }
-  }, [selectedCoupon]);
-
   // Calculate saved coupon discount directly from coupon data (no async dependency)
   const computedSavedCouponDiscount = (() => {
     if (!activeSavedCoupon) return 0;
+    const minOrderAmt = activeSavedCoupon.min_order_amount || 0;
+    if (minOrderAmt > 0 && subtotal < minOrderAmt) {
+      return 0; // Chặn áp mã nếu chưa đạt giá trị đơn hàng tối thiểu
+    }
     let raw = 0;
     if (activeSavedCoupon.discount_type === 'percent') {
       raw = Math.round(subtotal * activeSavedCoupon.discount / 100);
@@ -281,7 +239,7 @@ function CheckoutForm() {
   const handleConfirmPayment = async () => {
     setLoading(true);
     try {
-      const token = getAuthToken();
+      getAuthToken();
       const ref = referralCode.trim() || localStorage.getItem('affiliate_ref') || undefined;
       const items = checkoutItems.map(item => ({
         course_id: item.course?.id || item.combo?.id,

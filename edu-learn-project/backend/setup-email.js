@@ -1,3 +1,5 @@
+'use strict';
+
 // Setup script to configure email settings
 // Run this script to configure email for the application
 

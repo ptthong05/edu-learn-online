@@ -1,4 +1,4 @@
-﻿# EduLearn – Tài liệu Tiếng Việt
+# EduLearn – Tài liệu Tiếng Việt
 
 Chào mừng bạn đến với tài liệu EduLearn bằng tiếng Việt.
 
@@ -35,3 +35,4 @@ Chào mừng bạn đến với tài liệu EduLearn bằng tiếng Việt.
 | [developer/03-api-reference.md](developer/03-api-reference.md) | API Reference |
 | [developer/04-co-so-du-lieu.md](developer/04-co-so-du-lieu.md) | Cơ sở dữ liệu |
 | [developer/05-xac-thuc.md](developer/05-xac-thuc.md) | Xác thực & Phân quyền |
+| [developer/06-operations-guide.md](developer/06-operations-guide.md) | Hướng dẫn vận hành hệ thống (Operations Guide) |

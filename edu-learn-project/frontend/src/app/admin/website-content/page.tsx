@@ -589,7 +589,7 @@ export default function WebsiteContentAdmin() {
                   </div>
                 ))}
                 {guideSteps.length === 0 && (
-                  <p className="text-center py-6 text-gray-500 text-xs">Chưa thiết lập bước hướng dẫn nào. Hãy nhấn "+ Thêm bước" để bắt đầu.</p>
+                  <p className="text-center py-6 text-gray-500 text-xs">Chưa thiết lập bước hướng dẫn nào. Hãy nhấn &quot;+ Thêm bước&quot; để bắt đầu.</p>
                 )}
               </div>
             </div>

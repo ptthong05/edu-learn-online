@@ -39,7 +39,7 @@ function parseAndInjectIds(html: string): { toc: TocItem[]; processedHtml: strin
   const toc: TocItem[] = [];
   let index = 0;
 
-  const processedHtml = html.replace(/<(h[23])[^>]*>(.*?)<\/h[23]>/gi, (match, tag, inner) => {
+  const processedHtml = html.replace(/<(h[23])[^>]*>(.*?)<\/h[23]>/gi, (_match, tag, inner) => {
     const level = parseInt(tag[1]);
     const text = inner.replace(/<[^>]+>/g, '').trim();
     const id = `heading-${index}`;

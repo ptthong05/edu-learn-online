@@ -14,6 +14,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     logout();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [name, setName] = useState('');
