@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "17179d09-915f-41f6-b30e-16c704b9a147",
     "name": "EduLearnOnline API Testing Collection v3",
-    "description": "Bộ kiểm thử API dùng chung cho EduLearnOnline, đồng bộ với Backend hiện tại.\nBao phủ 34 API test: Auth (ORD-325), Courses (ORD-326), Coupons (ORD-327), Orders (ORD-328), Affiliate (ORD-329).\nThêm 3 request kiểm tra Newman/Environment cho ORD-330.\nCollection tự tạo tài khoản, token và coupon fixture theo từng lần chạy; chạy tuần tự từ trên xuống.",
+    "description": "Bộ kiểm thử API dùng chung cho EduLearnOnline, đồng bộ với Backend hiện tại.\nBao phủ ORD-325 → ORD-330 và bổ sung ORD-590 → ORD-597.\nORD-597 đã được cô lập bằng user/token riêng để chạy full collection không xung đột với ORD-329.\nCollection tự tạo dữ liệu test động theo từng lần chạy và chạy tuần tự từ trên xuống.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "56973388",
     "_collection_link": "https://go.postman.co/collection/56973388-17179d09-915f-41f6-b30e-16c704b9a147?source=collection_link"
@@ -702,13 +702,13 @@
                 "type": "text/javascript",
                 "exec": [
                   "const baseUrl = pm.collectionVariables.get('baseUrl');",
-                  "const adminToken = pm.collectionVariables.get('adminToken');",
+                  "const adminToken = pm.collectionVariables.get('adminToken') || pm.environment.get('adminToken');",
                   "if (!adminToken) throw new Error('adminToken chưa được thiết lập từ request 1.4');",
                   "const fixtures = [",
-                  "  { code: pm.collectionVariables.get('couponPercentCode'), discount: 20, discount_type: 'percent', min_order_amount: 0, expired_date: '2099-12-31' },",
-                  "  { code: pm.collectionVariables.get('couponFixedCode'), discount: 50000, discount_type: 'fixed', min_order_amount: 0, expired_date: '2099-12-31' },",
-                  "  { code: pm.collectionVariables.get('couponExpiredCode'), discount: 10, discount_type: 'percent', min_order_amount: 0, expired_date: '2020-01-01' },",
-                  "  { code: pm.collectionVariables.get('couponMinCode'), discount: 10, discount_type: 'percent', min_order_amount: 100000, expired_date: '2099-12-31' }",
+                  "  { code: pm.collectionVariables.get('couponPercentCode') || pm.environment.get('couponPercentCode'), discount: 20, discount_type: 'percent', min_order_amount: 0, expired_date: '2099-12-31' },",
+                  "  { code: pm.collectionVariables.get('couponFixedCode') || pm.environment.get('couponFixedCode'), discount: 50000, discount_type: 'fixed', min_order_amount: 0, expired_date: '2099-12-31' },",
+                  "  { code: pm.collectionVariables.get('couponExpiredCode') || pm.environment.get('couponExpiredCode'), discount: 10, discount_type: 'percent', min_order_amount: 0, expired_date: '2020-01-01' },",
+                  "  { code: pm.collectionVariables.get('couponMinCode') || pm.environment.get('couponMinCode'), discount: 10, discount_type: 'percent', min_order_amount: 100000, expired_date: '2099-12-31' }",
                   "];",
                   "const createFixture = (index) => {",
                   "  if (index >= fixtures.length) return;",
@@ -1730,7 +1730,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "['baseUrl', 'authToken', 'adminToken', 'testEmail', 'courseId', 'orderId'].forEach(key => {",
-                  "  if (!pm.collectionVariables.get(key)) throw new Error(`Collection variable ${key} chưa được set`);",
+                  "  const value = pm.collectionVariables.get(key) || pm.environment.get(key);",
+                  "  if (!value) throw new Error(`Variable ${key} chưa được set`);",
                   "});"
                 ]
               }
@@ -1742,7 +1743,8 @@
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "pm.test('Token thuộc đúng test user', () => {",
-                  "  pm.expect(pm.response.json().user.email).to.equal(pm.collectionVariables.get('testEmail'));",
+                  "  const expectedEmail = pm.collectionVariables.get('testEmail') || pm.environment.get('testEmail');",
+                  "  pm.expect(pm.response.json().user.email).to.equal(expectedEmail);",
                   "});"
                 ]
               }
@@ -1772,7 +1774,507 @@
           "response": []
         }
       ],
-      "description": "Kiểm tra khả năng chạy tuần tự bằng Newman, health và biến collection."
+      "description": "Kiểm tra khả năng chạy tuần tự bằng Newman, health và biến collection/environment."
+    },
+    {
+      "name": "7. Auth Profile - Token Chain (ORD-590)",
+      "item": [
+        {
+          "name": "7.1 [ORD-590] GET /users/profile - Current user schema",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time dưới 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Response có user object', () => { const json = pm.response.json(); pm.expect(json).to.have.property('user'); pm.expect(json.user).to.be.an('object'); });",
+                  "pm.test('User schema đầy đủ', () => { const user = pm.response.json().user; pm.expect(user).to.include.all.keys('id','email','full_name','role'); });",
+                  "pm.test('Không làm lộ password', () => pm.expect(pm.response.json().user).to.not.have.property('password'));",
+                  "pm.test('Token thuộc đúng test user', () => pm.expect(pm.response.json().user.email).to.equal(pm.collectionVariables.get('testEmail')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "ORD-590: kiểm tra current user profile, JWT token chain và schema người dùng bằng endpoint thực tế /api/users/profile."
+    },
+    {
+      "name": "8. Register Negative Validation (ORD-591)",
+      "item": [
+        {
+          "name": "8.1 [ORD-591] POST /auth/register - Email sai định dạng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Có message validation', () => pm.expect(pm.response.json()).to.have.property('message'));",
+                  "pm.test('Message báo email sai định dạng', () => { const msg = String(pm.response.json().message || '').toLowerCase(); pm.expect(msg).to.include('email'); });",
+                  "pm.test('Không trả token hoặc password', () => { const json = pm.response.json(); pm.expect(json).to.not.have.property('token'); pm.expect(json).to.not.have.property('password'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"ORD 591 Invalid Email\",\n  \"email\": \"email-sai-dinh-dang\",\n  \"password\": \"Pass123!@#\",\n  \"phone\": \"0912345678\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "ORD-591: negative validation cho email sai định dạng khi đăng ký tài khoản."
+    },
+    {
+      "name": "9. Course Detail Schema (ORD-592)",
+      "item": [
+        {
+          "name": "9.1 [ORD-592] GET /courses/:id - Schema chi tiết khóa học",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response là object chi tiết', () => pm.expect(pm.response.json()).to.be.an('object').and.not.an('array'));",
+                  "pm.test('Đúng courseId và đủ field', () => { const course = pm.response.json(); pm.expect(course.id).to.equal(pm.collectionVariables.get('courseId')); pm.expect(course).to.include.all.keys('title','price','description'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/{{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "courses",
+                "{{courseId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "ORD-592: schema validation cho API lấy chi tiết khóa học theo ID."
+    },
+    {
+      "name": "10. Dynamic Price Sort (ORD-593)",
+      "item": [
+        {
+          "name": "10.1 [ORD-593] GET /courses?sort_by=price-desc - Dynamic price DESC",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response là array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('Sắp xếp giá hiệu lực giảm dần', () => { const prices = pm.response.json().map(c => Number(c.sale_price ?? c.price)); for (let i=1;i<prices.length;i+=1) pm.expect(prices[i-1]).to.be.at.least(prices[i]); });",
+                  "pm.test('Mỗi course có id, title, price', () => { pm.response.json().forEach(c => pm.expect(c).to.include.all.keys('id','title','price')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses?sort_by=price-desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ],
+              "query": [
+                {
+                  "key": "sort_by",
+                  "value": "price-desc"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "ORD-593: kiểm tra sắp xếp khóa học theo giá hiệu lực giảm dần."
+    },
+    {
+      "name": "11. Coupon Fixed Amount (ORD-594)",
+      "item": [
+        {
+          "name": "11.1 [ORD-594] POST /coupons/validate - Fixed amount coupon",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Giảm cố định 50.000đ', () => { const json = pm.response.json(); pm.expect(json.valid).to.equal(true); pm.expect(json.calculated_discount).to.equal(50000); pm.expect(json.coupon.discount_type).to.equal('fixed'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "validate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{couponFixedCode}}\",\n  \"order_amount\": 300000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "ORD-594: kiểm tra coupon giảm số tiền cố định 50.000đ."
+    },
+    {
+      "name": "12. Order Detail Schema (ORD-595)",
+      "item": [
+        {
+          "name": "12.1 [ORD-595] GET /orders/:id - Order detail schema",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Đúng orderId và có items', () => { const json = pm.response.json(); pm.expect(json.id).to.equal(pm.collectionVariables.get('orderId')); pm.expect(json.items).to.be.an('array'); pm.expect(json).to.have.property('status'); pm.expect(['pending','completed','cancelled']).to.include(json.status); });",
+                  "pm.test('Order schema hợp lệ', () => { const json = pm.response.json(); pm.expect(json).to.have.property('id'); pm.expect(json).to.have.property('status'); pm.expect(json).to.have.property('total'); pm.expect(json).to.have.property('items'); pm.expect(json.items).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "ORD-595: schema validation cho chi tiết đơn hàng; không hard-code trạng thái pending."
+    },
+    {
+      "name": "13. Admin Order Status (ORD-596)",
+      "item": [
+        {
+          "name": "13.1 [ORD-596] PUT /admin/orders/:id/status - Admin update status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Status trả về là completed', () => pm.expect(pm.response.json().status).to.equal('completed'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orders/{{orderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orders",
+                "{{orderId}}",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "ORD-596: admin cập nhật trạng thái đơn hàng sang completed."
+    },
+    {
+      "name": "14. Affiliate Register (ORD-597)",
+      "item": [
+        {
+          "name": "14.1 [ORD-597 Setup] POST /auth/register - Tạo user riêng",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runId = Date.now().toString();",
+                  "const suffix = runId.slice(-8);",
+                  "pm.collectionVariables.set('ord597Email', `ord597_${runId}@edulearn.test`);",
+                  "pm.collectionVariables.set('ord597Phone', `09${suffix}`);",
+                  "pm.collectionVariables.set('ord597Password', 'Pass123!@#');",
+                  "pm.collectionVariables.unset('ord597Token');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ORD-597 setup - Register 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"ORD 597 Affiliate Test\",\n  \"email\": \"{{ord597Email}}\",\n  \"password\": \"{{ord597Password}}\",\n  \"phone\": \"{{ord597Phone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "14.2 [ORD-597 Setup] POST /auth/login - Lưu ord597Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ORD-597 setup - Login 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Lưu ord597Token thành công', () => { const json = pm.response.json(); pm.expect(json.token).to.be.a('string').and.not.empty; pm.collectionVariables.set('ord597Token', json.token); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{ord597Email}}\",\n  \"password\": \"{{ord597Password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "14.3 [ORD-597] POST /affiliates/register - Affiliate register schema",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Có message đăng ký thành công', () => { const json = pm.response.json(); pm.expect(json).to.have.property('message'); pm.expect(json.message).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ord597Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/affiliates/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "affiliates",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"ORD 597 Affiliate Test\",\n  \"email\": \"{{ord597Email}}\",\n  \"phone\": \"{{ord597Phone}}\",\n  \"bank_name\": \"Vietcombank\",\n  \"bank_account\": \"0123456789\",\n  \"address\": \"Đà Nẵng\",\n  \"dob\": \"2000-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "ORD-597 dùng user và token riêng để không xung đột với ORD-329 khi chạy toàn bộ collection."
     }
   ],
   "variable": [
@@ -1846,6 +2348,22 @@
     },
     {
       "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "ord597Email",
+      "value": ""
+    },
+    {
+      "key": "ord597Phone",
+      "value": ""
+    },
+    {
+      "key": "ord597Password",
+      "value": "Pass123!@#"
+    },
+    {
+      "key": "ord597Token",
       "value": ""
     }
   ]

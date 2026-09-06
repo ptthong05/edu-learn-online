@@ -60,6 +60,9 @@ function OrderConfirmationContent() {
         });
     } else if (orderId) {
       fetchOrderDetails();
+    } else {
+      // No checkout flow and no orderId: stop loading so the fallback UI can render.
+      setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, isCheckout]);

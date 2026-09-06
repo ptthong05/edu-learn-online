@@ -51,7 +51,13 @@ export default function CourseCard({ course, size = 'md', showActions = false }:
       <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1 h-full flex flex-col">
         {/* Thumbnail */}
         <div className="relative overflow-hidden aspect-video flex-shrink-0">
-          <Image src={course.image} alt={course.title} fill className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 768px) 100vw, 400px" />
+          <Image
+  src={course.image || '/auth-illustration.png'}
+  alt={course.title || 'Khóa học'}
+  fill
+  className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+  sizes="(max-width: 768px) 100vw, 400px"
+/>
           {/* Badges */}
           <div className="absolute top-2.5 left-2.5 flex gap-1.5">
             {course.is_bestseller && <span className="bg-yellow-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">Bán chạy</span>}
