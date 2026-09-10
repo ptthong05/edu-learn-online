@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "codeceptjs run",
+    "test:ord256": "node tests/ORD-256/run-all-ord256.js",
     "codeceptjs": "codeceptjs run --steps",
     "codeceptjs:headless": "HEADLESS=true codeceptjs run --steps"
   },
