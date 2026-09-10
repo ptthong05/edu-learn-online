@@ -1190,6 +1190,7 @@ function normalizeCouponPayload(body, existing = {}) {
     code: body.code !== undefined ? String(body.code).trim().toUpperCase() : existing.code,
     discount: body.discount !== undefined ? Number(body.discount) : existing.discount,
     quantity: body.quantity !== undefined ? Number(body.quantity) : existing.quantity,
+    used_count: body.used_count !== undefined ? Number(body.used_count) : (existing.used_count || 0),
     expired_date: body.expired_date !== undefined ? body.expired_date : existing.expired_date,
     status: body.status !== undefined ? body.status : (existing.status || 'active'),
     usable_by: body.usable_by !== undefined ? body.usable_by : (existing.usable_by || 'user'),
@@ -1214,9 +1215,9 @@ app.post('/api/admin/coupons', authenticateToken, checkUserStatus, requireRole([
 
     await db.run(
       `INSERT INTO coupons (id, code, discount, quantity, used_count, expired_date, status, usable_by, description, discount_type, max_discount, min_order_amount)
-       VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, p.code, p.discount, p.quantity, p.expired_date,
+        id, p.code, p.discount, p.quantity, p.used_count, p.expired_date,
         p.status, p.usable_by, p.description, p.discount_type, p.max_discount, p.min_order_amount
       ]
     );
@@ -1243,11 +1244,11 @@ app.put('/api/admin/coupons/:id', authenticateToken, checkUserStatus, requireRol
 
     await db.run(
       `UPDATE coupons 
-       SET code = ?, discount = ?, quantity = ?, expired_date = ?, status = ?,
+       SET code = ?, discount = ?, quantity = ?, used_count = ?, expired_date = ?, status = ?,
            usable_by = ?, description = ?, discount_type = ?, max_discount = ?, min_order_amount = ?
        WHERE id = ?`,
       [
-        p.code, p.discount, p.quantity, p.expired_date, p.status,
+        p.code, p.discount, p.quantity, p.used_count, p.expired_date, p.status,
         p.usable_by, p.description, p.discount_type, p.max_discount, p.min_order_amount, id
       ]
     );
